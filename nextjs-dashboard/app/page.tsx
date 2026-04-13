@@ -1,5 +1,6 @@
 import SkyboltLogo from '@/app/ui/skybolt-logo';
-import { Phone, MessageCircle, Mail, Youtube, Instagram, Twitter } from 'lucide-react';
+import { Phone, MessageCircle, Mail} from 'lucide-react';
+import { FaYoutube, FaInstagram, FaTwitter } from 'react-icons/fa';
 
 export default function Page() {
   return (
@@ -29,9 +30,9 @@ export default function Page() {
         <p className="text-lg md:text-xl mb-8 opacity-90">Penetrate the Sky, Accelerate Your Business.</p>
         
         <div className="flex space-x-4 mb-6">
-          <div className="p-3 bg-red-600 rounded-full cursor-pointer"><Youtube size={20} /></div>
-          <div className="p-3 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 rounded-full cursor-pointer"><Instagram size={20} /></div>
-          <div className="p-3 bg-sky-500 rounded-full cursor-pointer"><Twitter size={20} /></div>
+          <div className="p-3 bg-red-600 rounded-full cursor-pointer"><FaYoutube size={20} /></div>
+          <div className="p-3 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 rounded-full cursor-pointer"><FaInstagram size={20} /></div>
+          <div className="p-3 bg-sky-500 rounded-full cursor-pointer"><FaTwitter size={20} /></div>
         </div>
         <p className="text-xs uppercase tracking-widest font-bold">Ekspedisi Petir • Kargo Udara</p>
       </section>
