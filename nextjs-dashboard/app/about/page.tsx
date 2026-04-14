@@ -37,16 +37,16 @@ export default function AboutPage() {
               kecepatan, keandalan, dan transparansi dalam proses pengiriman secara real-time.
             </p>
           </div>
-          <div className="flex justify-center">
-            {/* Ganti dengan path logo kamu yang benar */}
-            <div className="w-64 h-64 bg-white/5 rounded-full flex items-center justify-center p-4 border border-white/10 backdrop-blur-sm">
+          <div className="flex justify-center md:justify-end">
+            {/* Container Lingkaran */}
+            <div className="w-72 h-72 bg-white rounded-full flex items-center justify-center overflow-hidden border-4 shadow-xl">
                 <img 
-                  src="/logo.png" 
-                  alt="Skybolt Logo" 
-                  className="w-full h-auto object-contain"
+                src="/logo.png" 
+                alt="Skybolt Logo" 
+                className="w-full h-full object-cover"
                 />
+                </div>
             </div>
-          </div>
         </div>
 
         {/* Section: Why Skybolt? */}
