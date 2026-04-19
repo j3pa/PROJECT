@@ -36,10 +36,12 @@ export default function Navbar() {
         >
           CONTACT
         </Link>
-
-        <button className="bg-blue-900 px-6 py-1 rounded-md border border-white/20 text-white">
-          LOG IN
-        </button>
+        <Link
+          href="/login"
+          className="bg-blue-900 px-6 py-1 rounded-md border border-white/20 text-white"
+        >
+  LOG IN
+</Link>
       </div>
     </nav>
   );
