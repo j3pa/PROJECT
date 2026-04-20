@@ -1,9 +1,9 @@
-"use client"; // Wajib ditambahkan agar usePathname bisa berfungsi
+"use client";
 
 import './ui/global.css';
 import { Poppins } from "next/font/google";
-import { usePathname } from 'next/navigation'; // Import hook untuk cek URL
-import Navbar from '@/app/ui/navbar'; // Sesuaikan dengan lokasi file navbar Anda
+import { usePathname } from 'next/navigation'; 
+import Navbar from '@/app/ui/navbar';
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -13,7 +13,7 @@ const poppins = Poppins({
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Logika: Navbar tidak muncul jika URL dimulai dengan /dashboard atau /login
+// navbar hanya muncul di company profile
   const hideNavbar = pathname.startsWith('/dashboard') || pathname === '/login';
 
   return (
