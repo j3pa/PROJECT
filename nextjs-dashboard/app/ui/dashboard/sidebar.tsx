@@ -92,7 +92,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-white/10">
         <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-          <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+          <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="orange">
             <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
           </svg>
         </div>

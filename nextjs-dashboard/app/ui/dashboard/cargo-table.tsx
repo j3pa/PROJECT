@@ -14,11 +14,11 @@ export interface CargoRow {
 }
 
 const badgeClass: Record<CargoRow['status'], string> = {
-  Received:  'badge-received',
-  Loaded:    'badge-loaded',
-  Sortation: 'badge-sortation',
-  Departed:  'badge-departed',
-  Arrived:   'badge-arrived',
+  Received:  'bg-blue-100 text-blue-700',
+  Loaded:    'bg-green-100 text-green-700',
+  Sortation: 'bg-orange-100 text-orange-600',
+  Departed:  'bg-purple-100 text-purple-700',
+  Arrived:   'bg-teal-100 text-teal-700',
 }
 
 const STATUSES: Array<CargoRow['status'] | 'Semua Status'> = [
@@ -104,7 +104,7 @@ export default function CargoTable({ data }: CargoTableProps) {
                 <td className="px-5 py-3 font-mono text-gray-700 text-[11px] whitespace-nowrap">{row.penerbangan}</td>
                 <td className="px-5 py-3 text-gray-700 whitespace-nowrap">{row.waktuMasuk}</td>
                 <td className="px-5 py-3 whitespace-nowrap">
-                  <span className={`badge ${badgeClass[row.status]} text-[10.5px] font-bold px-3 py-1 rounded-full`}>
+                  <span className={`${badgeClass[row.status]} text-[10.5px] font-bold px-3 py-1 rounded-full`}>
                     {row.status}
                   </span>
                 </td>
