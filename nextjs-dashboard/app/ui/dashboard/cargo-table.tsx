@@ -10,7 +10,7 @@ export interface CargoRow {
   berat: string
   penerbangan: string
   waktuMasuk: string
-  status: 'Received' | 'Loaded' | 'Sortation' | 'Departed' | 'Arrived'
+  status: 'Received' | 'Sortation' | 'Loaded' | 'Departed' | 'Arrived'
 }
 
 const badgeClass: Record<CargoRow['status'], string> = {
@@ -22,7 +22,7 @@ const badgeClass: Record<CargoRow['status'], string> = {
 }
 
 const STATUSES: Array<CargoRow['status'] | 'Semua Status'> = [
-  'Semua Status', 'Received', 'Loaded', 'Sortation', 'Departed', 'Arrived',
+  'Semua Status', 'Received', 'Sortation','Loaded' , 'Departed', 'Arrived',
 ]
 
 interface CargoTableProps {

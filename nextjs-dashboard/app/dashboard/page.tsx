@@ -27,19 +27,19 @@ export default function DashboardPage() {
         {/* Stat cards */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           <StatCard
-            label="Total Kargo Hari Ini"
+            label="Received"
             value="148"
             sub="+12 dari kemarin"
             dotColor="#22c55e"
           />
           <StatCard
-            label="Sudah Dimuad (Loaded)"
+            label="Sudah Dikirim (Loaded)"
             value="97"
             sub="65.5% dari total"
             valueColor="text-green-600"
           />
           <StatCard
-            label="Menunggu Sortasi"
+            label="On-Time"
             value="34"
             sub="3 hampir terlambat"
             dotColor="#f59e0b"
