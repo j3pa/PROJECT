@@ -5,11 +5,11 @@ import CargoTable, { CargoRow } from '@/app/ui/dashboard/cargo-table'
 const cargoData: CargoRow[] = [
   { awb: '001-2847391', pengirim: 'PT Solusi Maju',   penerima: 'Rizky Jerico',  tujuan: 'SUB', berat: '50 kg',  penerbangan: 'GA – 136',  waktuMasuk: '05.12', status: 'Received'  },
   { awb: '001-2847392', pengirim: 'PT Nusantara',     penerima: 'Andi Pratama',  tujuan: 'DPS', berat: '7.5 kg', penerbangan: 'IU – 602',  waktuMasuk: '05.28', status: 'Loaded'    },
-  { awb: '001-2847393', pengirim: 'PT Cahaya Baru',   penerima: 'Dewi Sartika',  tujuan: 'MDN', berat: '33 kg',  penerbangan: 'JT – 892',  waktuMasuk: '05.44', status: 'Sortation' },
+  { awb: '001-2847393', pengirim: 'PT Cahaya Baru',   penerima: 'Dewi Sartika',  tujuan: 'MDN', berat: '33 kg',  penerbangan: 'JT – 892',  waktuMasuk: '05.44', status: 'OnTime' },
   { awb: '001-2847394', pengirim: 'CV Berkah Jaya',   penerima: 'Hanna Safi',    tujuan: 'UPG', berat: '45 kg',  penerbangan: 'ID – 7531', waktuMasuk: '06.02', status: 'Received'  },
   { awb: '001-2847395', pengirim: 'UD Makmur',        penerima: 'Immanuel',      tujuan: 'BPN', berat: '12.5 kg',penerbangan: 'SJ – 200',  waktuMasuk: '06.15', status: 'Loaded'    },
   { awb: '001-2847396', pengirim: 'PT Permata',       penerima: 'Budi Susanto',  tujuan: 'PLM', berat: '41 kg',  penerbangan: 'GA – 803',  waktuMasuk: '06.33', status: 'Received'  },
-  { awb: '001-2847397', pengirim: 'CV Mitra Abadi',   penerima: 'Praka Liam',    tujuan: 'JOG', berat: '120 kg', penerbangan: 'QG – 778',  waktuMasuk: '06.49', status: 'Sortation' },
+  { awb: '001-2847397', pengirim: 'CV Mitra Abadi',   penerima: 'Praka Liam',    tujuan: 'JOG', berat: '120 kg', penerbangan: 'QG – 778',  waktuMasuk: '06.49', status: 'OnTime' },
 ]
 
 export default function DashboardPage() {
@@ -27,23 +27,24 @@ export default function DashboardPage() {
         {/* Stat cards */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           <StatCard
-            label="Received"
+            label="Departed"
             value="148"
             sub="+12 dari kemarin"
             dotColor="#22c55e"
           />
           <StatCard
-            label="Sudah Dikirim (Loaded)"
+            label="Delayed"
             value="97"
             sub="65.5% dari total"
-            valueColor="text-green-600"
+            dotColor="#f59e0b"
+            valueColor="text-orange-600"
           />
           <StatCard
             label="On-Time"
             value="34"
             sub="3 hampir terlambat"
-            dotColor="#f59e0b"
-            valueColor="text-orange-500"
+            dotColor="#2bcf25"
+            valueColor="text-green-600"
           />
           <StatCard
             label="Penerbangan Hari Ini"

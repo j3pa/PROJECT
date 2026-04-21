@@ -10,19 +10,19 @@ export interface CargoRow {
   berat: string
   penerbangan: string
   waktuMasuk: string
-  status: 'Received' | 'Sortation' | 'Loaded' | 'Departed' | 'Arrived'
+  status: 'Received' | 'OnTime' | 'Loaded' | 'Departed' | 'Arrived'
 }
 
 const badgeClass: Record<CargoRow['status'], string> = {
   Received:  'bg-blue-100 text-blue-700',
   Loaded:    'bg-green-100 text-green-700',
-  Sortation: 'bg-orange-100 text-orange-600',
+  OnTime: 'bg-orange-100 text-orange-600',
   Departed:  'bg-purple-100 text-purple-700',
   Arrived:   'bg-teal-100 text-teal-700',
 }
 
 const STATUSES: Array<CargoRow['status'] | 'Semua Status'> = [
-  'Semua Status', 'Received', 'Sortation','Loaded' , 'Departed', 'Arrived',
+  'Semua Status', 'Received', 'OnTime','Loaded' , 'Departed', 'Arrived',
 ]
 
 interface CargoTableProps {
