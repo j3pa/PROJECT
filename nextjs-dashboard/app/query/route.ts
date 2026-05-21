@@ -2,8 +2,8 @@ import postgres from 'postgres';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
-async function getCargoData() {
-  // Query baru untuk mencocokkan data Cargo, Customer (berdasarkan Email), dan Bandara Tujuan
+async function getCargoDataForUser(userEmail: string) {
+  // Query direvisi dengan WHERE clause untuk memfilter data berdasarkan 1 user saja
   const data = await sql`
     SELECT 
       cargo.awb,
@@ -14,7 +14,8 @@ async function getCargoData() {
       cargo.status
     FROM cargo
     JOIN customers ON cargo.customer_email = customers.email
-    JOIN bandara ON cargo.tujuan_id = bandara.id;
+    JOIN bandara ON cargo.tujuan_id = bandara.id
+    WHERE customers.email = ${userEmail};
   `;
 
   return data;
@@ -22,12 +23,15 @@ async function getCargoData() {
 
 export async function GET() {
   try {
-    const data = await getCargoData();
+    // Hardcode 1 email user dummy yang ada di database hasil seed (misal: Budi Santoso)
+    // Nanti pada tahap implementasi Auth, ini bisa diganti dengan email dari session user login
+    const currentUserEmail = 'budi.santoso@gmail.com'; 
+
+    const data = await getCargoDataForUser(currentUserEmail);
     
-    // Mengubah JSON menjadi string yang rapi dengan lekukan 2 spasi
+    // Format JSON agar langsung rapi (Pretty-print dari sisi kode)
     const prettyJson = JSON.stringify(data, null, 2);
     
-    // Mengembalikan response berupa teks biasa (atau JSON) yang sudah rapi
     return new Response(prettyJson, {
       headers: { 'Content-Type': 'application/json' },
     });
