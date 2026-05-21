@@ -38,6 +38,17 @@ const flights: Flight[] = [
     progress: 0,
   },
   {
+    nomor: 'ID - 203',
+    rute: 'CGK → MAK',
+    status: 'On-time',
+    labelKiri: 'Berangkat',
+    labelKanan: 'Tiba',
+    jamKiri: '08:00',
+    jamKanan: '09:30',
+    info: '12 kargo • Sedang take-off',
+    progress: 80,
+  },
+  {
     nomor: 'ID – 305',
     rute: 'CGK → DPS',
     status: 'On-time',
