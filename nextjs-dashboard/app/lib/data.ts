@@ -1,218 +1,135 @@
+// app/lib/data.ts
 import postgres from 'postgres';
-import {
-  CustomerField,
-  CustomersTableType,
-  InvoiceForm,
-  InvoicesTable,
-  LatestInvoiceRaw,
-  Revenue,
-} from './definitions';
-import { formatCurrency } from './utils';
 
+// Inisialisasi koneksi ke database Neon dengan SSL wajib
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
-export async function fetchRevenue() {
+// Fungsi pembantu untuk menahan loading skeleton (1000ms = 1 detik)
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * 1. FETCH DATA RINGKASAN UTAMA DASHBOARD
+ * Mengambil data statistik untuk 4 Kotak Status atas (Total Cargo, Total Flights, dll).
+ * Digunakan pada: app/dashboard/page.tsx
+ */
+export async function fetchDashboardData() {
   try {
-    // Artificially delay a response for demo purposes.
-    // Don't do this in production :)
+    // Tahan loading skeleton utama selama 3 detik
+    await delay(3000);
 
-    // console.log('Fetching revenue data...');
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
+    // Menjalankan query hitung secara paralel demi efisiensi
+    const totalCargoPromise = sql`SELECT COUNT(*) FROM cargo`;
+    const totalPenerbanganPromise = sql`SELECT COUNT(*) FROM penerbangan`;
+    const statusGroupPromise = sql`
+      SELECT 
+        SUM(CASE WHEN status = 'Departed' THEN 1 ELSE 0 END) AS departed,
+        SUM(CASE WHEN status = 'Sortation' THEN 1 ELSE 0 END) AS sortation,
+        SUM(CASE WHEN status = 'Received' THEN 1 ELSE 0 END) AS received
+      FROM manifest`;
 
-    const data = await sql<Revenue[]>`SELECT * FROM revenue`;
-
-    // console.log('Data fetch completed after 3 seconds.');
-
-    return data;
-  } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch revenue data.');
-  }
-}
-
-export async function fetchLatestInvoices() {
-  try {
-    const data = await sql<LatestInvoiceRaw[]>`
-      SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
-      FROM invoices
-      JOIN customers ON invoices.customer_id = customers.id
-      ORDER BY invoices.date DESC
-      LIMIT 5`;
-
-    const latestInvoices = data.map((invoice) => ({
-      ...invoice,
-      amount: formatCurrency(invoice.amount),
-    }));
-    return latestInvoices;
-  } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch the latest invoices.');
-  }
-}
-
-export async function fetchCardData() {
-  try {
-    // You can probably combine these into a single SQL query
-    // However, we are intentionally splitting them to demonstrate
-    // how to initialize multiple queries in parallel with JS.
-    const invoiceCountPromise = sql`SELECT COUNT(*) FROM invoices`;
-    const customerCountPromise = sql`SELECT COUNT(*) FROM customers`;
-    const invoiceStatusPromise = sql`SELECT
-         SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS "paid",
-         SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) AS "pending"
-         FROM invoices`;
-
-    const data = await Promise.all([
-      invoiceCountPromise,
-      customerCountPromise,
-      invoiceStatusPromise,
+    const [totalCargo, totalPenerbangan, statusCounts] = await Promise.all([
+      totalCargoPromise,
+      totalPenerbanganPromise,
+      statusGroupPromise,
     ]);
 
-    const numberOfInvoices = Number(data[0][0].count ?? '0');
-    const numberOfCustomers = Number(data[1][0].count ?? '0');
-    const totalPaidInvoices = formatCurrency(data[2][0].paid ?? '0');
-    const totalPendingInvoices = formatCurrency(data[2][0].pending ?? '0');
-
     return {
-      numberOfCustomers,
-      numberOfInvoices,
-      totalPaidInvoices,
-      totalPendingInvoices,
+      cargoCount: Number(totalCargo[0].count ?? '0'),
+      flightCount: Number(totalPenerbangan[0].count ?? '0'),
+      departedCount: Number(statusCounts[0].departed ?? '0'),
+      sortationCount: Number(statusCounts[0].sortation ?? '0'),
+      receivedCount: Number(statusCounts[0].received ?? '0'),
     };
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch card data.');
+    throw new Error('Failed to fetch dashboard overview data.');
   }
 }
 
-const ITEMS_PER_PAGE = 6;
-export async function fetchFilteredInvoices(
-  query: string,
-  currentPage: number,
-) {
-  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-
+/**
+ * 2. FETCH DATA MANIFEST HARIAN
+ * Mengambil seluruh daftar log manifest harian untuk tabel utama.
+ * Digunakan pada: app/dashboard/manifest/page.tsx
+ */
+export async function fetchManifestData() {
   try {
-    const invoices = await sql<InvoicesTable[]>`
-      SELECT
-        invoices.id,
-        invoices.amount,
-        invoices.date,
-        invoices.status,
-        customers.name,
-        customers.email,
-        customers.image_url
-      FROM invoices
-      JOIN customers ON invoices.customer_id = customers.id
-      WHERE
-        customers.name ILIKE ${`%${query}%`} OR
-        customers.email ILIKE ${`%${query}%`} OR
-        invoices.amount::text ILIKE ${`%${query}%`} OR
-        invoices.date::text ILIKE ${`%${query}%`} OR
-        invoices.status ILIKE ${`%${query}%`}
-      ORDER BY invoices.date DESC
-      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
-    `;
+    // Tahan loading skeleton tabel manifest selama 2.5 detik
+    await delay(2500);
 
-    return invoices;
+    const data = await sql`
+      SELECT awb, pengirim, tujuan, koli, berat, penerbangan, status, waktu_update
+      FROM manifest
+      ORDER BY waktu_update DESC;
+    `;
+    
+    return data;
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch invoices.');
+    throw new Error('Failed to fetch manifest data.');
   }
 }
 
-export async function fetchInvoicesPages(query: string) {
+/**
+ * 3. FETCH JADWAL STATUS PENERBANGAN
+ * Mengambil rute penerbangan dengan join data master bandara (Asal & Tujuan).
+ * Digunakan pada: app/dashboard/penerbangan/page.tsx
+ */
+export async function fetchFlightData() {
   try {
-    const data = await sql`SELECT COUNT(*)
-    FROM invoices
-    JOIN customers ON invoices.customer_id = customers.id
-    WHERE
-      customers.name ILIKE ${`%${query}%`} OR
-      customers.email ILIKE ${`%${query}%`} OR
-      invoices.amount::text ILIKE ${`%${query}%`} OR
-      invoices.date::text ILIKE ${`%${query}%`} OR
-      invoices.status ILIKE ${`%${query}%`}
-  `;
+    // Tahan loading skeleton tabel penerbangan selama 2.5 detik
+    await delay(2500);
 
-    const totalPages = Math.ceil(Number(data[0].count) / ITEMS_PER_PAGE);
-    return totalPages;
+    const data = await sql`
+      SELECT 
+        p.id, 
+        p.nomor, 
+        b_asal.kode AS asal_kode, 
+        b_asal.nama AS asal_bandara,
+        b_tujuan.kode AS tujuan_kode, 
+        b_tujuan.nama AS tujuan_bandara,
+        p.waktu
+      FROM penerbangan p
+      JOIN bandara b_asal ON p.asal_id = b_asal.id
+      JOIN bandara b_tujuan ON p.tujuan_id = b_tujuan.id
+      ORDER BY p.waktu ASC;
+    `;
+    
+    return data;
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch total number of invoices.');
+    throw new Error('Failed to fetch flight schedules data.');
   }
 }
 
-export async function fetchInvoiceById(id: string) {
+/**
+ * 4. FETCH TRACKING LOG (BY AWB)
+ * Melacak log kargo spesifik berdasarkan nomor resi AWB yang diinput user.
+ * Digunakan pada: app/dashboard/tracking/page.tsx
+ */
+export async function fetchTrackingByAwb(awbQuery: string) {
   try {
-    const data = await sql<InvoiceForm[]>`
-      SELECT
-        invoices.id,
-        invoices.customer_id,
-        invoices.amount,
-        invoices.status
-      FROM invoices
-      WHERE invoices.id = ${id};
+    if (!awbQuery) return null;
+
+    // Tahan efek pencarian tracking kargo selama 1.5 detik agar realistis
+    await delay(1500);
+
+    const data = await sql`
+      SELECT 
+        c.awb, 
+        cust.name AS nama_customer, 
+        b.nama AS bandara_tujuan, 
+        b.kota AS kota_tujuan, 
+        c.berat, 
+        c.status
+      FROM cargo c
+      JOIN customers cust ON c.customer_email = cust.email
+      JOIN bandara b ON c.tujuan_id = b.id
+      WHERE c.awb ILIKE ${`%${awbQuery}%`};
     `;
-
-    const invoice = data.map((invoice) => ({
-      ...invoice,
-      // Convert amount from cents to dollars
-      amount: invoice.amount / 100,
-    }));
-
-    return invoice[0];
+    
+    return data;
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch invoice.');
-  }
-}
-
-export async function fetchCustomers() {
-  try {
-    const customers = await sql<CustomerField[]>`
-      SELECT
-        id,
-        name
-      FROM customers
-      ORDER BY name ASC
-    `;
-
-    return customers;
-  } catch (err) {
-    console.error('Database Error:', err);
-    throw new Error('Failed to fetch all customers.');
-  }
-}
-
-export async function fetchFilteredCustomers(query: string) {
-  try {
-    const data = await sql<CustomersTableType[]>`
-		SELECT
-		  customers.id,
-		  customers.name,
-		  customers.email,
-		  customers.image_url,
-		  COUNT(invoices.id) AS total_invoices,
-		  SUM(CASE WHEN invoices.status = 'pending' THEN invoices.amount ELSE 0 END) AS total_pending,
-		  SUM(CASE WHEN invoices.status = 'paid' THEN invoices.amount ELSE 0 END) AS total_paid
-		FROM customers
-		LEFT JOIN invoices ON customers.id = invoices.customer_id
-		WHERE
-		  customers.name ILIKE ${`%${query}%`} OR
-        customers.email ILIKE ${`%${query}%`}
-		GROUP BY customers.id, customers.name, customers.email, customers.image_url
-		ORDER BY customers.name ASC
-	  `;
-
-    const customers = data.map((customer) => ({
-      ...customer,
-      total_pending: formatCurrency(customer.total_pending),
-      total_paid: formatCurrency(customer.total_paid),
-    }));
-
-    return customers;
-  } catch (err) {
-    console.error('Database Error:', err);
-    throw new Error('Failed to fetch customer table.');
+    throw new Error('Failed to fetch tracking details.');
   }
 }

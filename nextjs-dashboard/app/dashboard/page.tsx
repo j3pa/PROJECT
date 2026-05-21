@@ -2,6 +2,7 @@ import Topbar    from '@/app/ui/dashboard/topbar'
 import StatCard  from '@/app/ui/dashboard/stat-card'
 import CargoTable, { CargoRow } from '@/app/ui/dashboard/cargo-table'
 
+
 const cargoData: CargoRow[] = [
   { awb: '001-2847391', pengirim: 'PT Solusi Maju',   penerima: 'Rizky Jerico',  tujuan: 'SUB', berat: '50 kg',  penerbangan: 'GA – 136',  waktuMasuk: '05.12', status: 'Received'  },
   { awb: '001-2847392', pengirim: 'PT Nusantara',     penerima: 'Andi Pratama',  tujuan: 'DPS', berat: '7.5 kg', penerbangan: 'IU – 602',  waktuMasuk: '05.28', status: 'Loaded'    },
