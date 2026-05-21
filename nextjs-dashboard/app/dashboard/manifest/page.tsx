@@ -40,6 +40,13 @@ const PERIODS = ['Harian', 'Mingguan', 'Bulanan']
 export default function ManifestPage() {
   const [period, setPeriod]   = useState('Harian')
   const [showDrop, setShowDrop] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
+
+  const totalPages = Math.ceil(allData.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedData = allData.slice(startIndex, endIndex)
 
   function handleExport() {
     const headers = ['No AWB', 'Pengirim', 'Tujuan', 'Koli', 'Berat', 'Penerbangan', 'Status', 'Waktu Update']
@@ -132,11 +139,11 @@ export default function ManifestPage() {
                 </tr>
               </thead>
               <tbody>
-                {allData.map((row, i) => (
+                {paginatedData.map((row, i) => (
                   <tr
                     key={row.awb}
                     className={`border-b border-gray-50 hover:bg-blue-50/30 transition ${
-                      i === allData.length - 1 ? 'border-b-0' : ''
+                      i === paginatedData.length - 1 ? 'border-b-0' : ''
                     }`}
                   >
                     <td className="px-6 py-4 font-mono text-blue-600 font-semibold text-[12px] whitespace-nowrap">
@@ -172,12 +179,48 @@ export default function ManifestPage() {
           </div>
 
           {/* Card footer */}
-          <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between">
+          <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
             <p className="text-[11px] text-gray-400">
               Total {allData.length} kargo ·{' '}
               {allData.reduce((sum, r) => sum + r.koli, 0)} koli ·{' '}
               {allData.filter(r => r.status === 'Arrived' || r.status === 'Departed').length} sudah dikirim
             </p>
+            
+            {/* Pagination */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-[11px] font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                ← Sebelumnya
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-2.5 py-1.5 text-[11px] font-medium rounded-lg transition ${
+                      currentPage === page
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 text-[11px] font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Berikutnya →
+              </button>
+            </div>
+
             <p className="text-[11px] text-gray-400">
               Periode: <span className="font-semibold text-gray-600">{period}</span>
             </p>
