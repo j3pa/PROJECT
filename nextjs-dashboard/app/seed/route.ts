@@ -1,4 +1,5 @@
-import bcrypt from 'bcrypt';
+export const dynamic = 'force-dynamic'; // Mencegah caching Next.js
+
 import postgres from 'postgres';
 import { customers, bandara, penerbangan, cargo, manifest } from '@/app/lib/placeholder-data'; 
 
@@ -23,8 +24,9 @@ async function seedBandara(sql: any) {
   );
 }
 
-// 2. SEED CUSTOMERS (Master) - Diubah ke VARCHAR agar sinkron dengan data dummy & mudah di-query manual
+// 2. SEED CUSTOMERS (Master)
 async function seedCustomers(sql: any) {
+  // Menggunakan VARCHAR(10) agar string id 'C01', 'C02' dari placeholder tidak memicu error UUID
   await sql`
     CREATE TABLE IF NOT EXISTS customers (
       id VARCHAR(10) PRIMARY KEY,
@@ -82,44 +84,46 @@ async function seedCargo(sql: any) {
   );
 }
 
-// 5. SEED MANIFEST (Junction Table)
+// 5. SEED MANIFEST (Disesuaikan penuh dengan struktur Manifest Harian Anda)
 async function seedManifest(sql: any) {
   await sql`
     CREATE TABLE IF NOT EXISTS manifest (
-      id VARCHAR(10) PRIMARY KEY,
-      penerbangan_id VARCHAR(10) REFERENCES penerbangan(id),
-      awb VARCHAR(20) REFERENCES cargo(awb),
-      catatan VARCHAR(255)
+      awb VARCHAR(50) PRIMARY KEY,
+      pengirim VARCHAR(100) NOT NULL,
+      tujuan VARCHAR(10) NOT NULL,
+      koli INT NOT NULL,
+      berat VARCHAR(20) NOT NULL,
+      penerbangan VARCHAR(50) NOT NULL,
+      status VARCHAR(30) NOT NULL,
+      waktu_update VARCHAR(10) NOT NULL
     );
   `;
   return Promise.all(
     manifest.map((m: any) => sql`
-      INSERT INTO manifest (id, penerbangan_id, awb, catatan)
-      VALUES (${m.id}, ${m.penerbangan_id}, ${m.awb}, ${m.catatan})
-      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO manifest (awb, pengirim, tujuan, koli, berat, penerbangan, status, waktu_update)
+      VALUES (${m.awb}, ${m.pengirim}, ${m.tujuan}, ${m.koli}, ${m.berat}, ${m.penerbangan}, ${m.status}, ${m.waktuUpdate})
+      ON CONFLICT (awb) DO NOTHING;
     `)
   );
 }
 
 export async function GET() {
   try {
-    const result = await sql.begin(async (sql) => {
-      // PENTING: Hapus tabel lama terlebih dahulu agar perubahan struktur/relasi baru bisa diterapkan tanpa bentrok
-      await sql`DROP TABLE IF EXISTS manifest, cargo, penerbangan, customers, bandara CASCADE;`;
-      
-      return [
-        await seedBandara(sql),
-        await seedCustomers(sql),
-        await seedPenerbangan(sql),
-        await seedCargo(sql),
-        await seedManifest(sql),
-      ];
-    });
-    
+    // Drop tabel manifest lama terlebih dahulu agar tidak memicu error bentrok skema/kolom
+    await sql`DROP TABLE IF EXISTS manifest;`;
+    await sql`DROP TABLE IF EXISTS cargo;`;
+    await sql`DROP TABLE IF EXISTS customers;`;
+
+    // Mulai proses seeding berurutan
+    await seedBandara(sql);
+    await seedCustomers(sql);
+    await seedPenerbangan(sql);
+    await seedCargo(sql);
+    await seedManifest(sql);
+
     return Response.json({ message: 'Database Ekspedisi Petir seeded successfully!' });
   } catch (error: any) {
     console.error('Seed Error:', error);
-    // Menampilkan pesan error spesifik jika terjadi kegagalan di browser
     return Response.json({ error: error.message || error }, { status: 500 });
   }
 }

@@ -41,17 +41,17 @@ export const cargo = [
 
 // Tabel Junction (Many-to-Many antara Penerbangan dan Cargo)
 export const manifest = [
-  { id: 'M01', penerbangan_id: 'F01', awb: 'AWB-001', catatan: 'Aman' },
-  { id: 'M02', penerbangan_id: 'F02', awb: 'AWB-002', catatan: 'Fragile' },
-  { id: 'M03', penerbangan_id: 'F03', awb: 'AWB-003', catatan: 'Aman' },
-  { id: 'M04', penerbangan_id: 'F04', awb: 'AWB-004', catatan: 'Aman' },
-  { id: 'M05', penerbangan_id: 'F05', awb: 'AWB-005', catatan: 'Aman' },
-  { id: 'M06', penerbangan_id: 'F06', awb: 'AWB-006', catatan: 'Aman' },
-  { id: 'M07', penerbangan_id: 'F07', awb: 'AWB-007', catatan: 'Aman' },
-  { id: 'M08', penerbangan_id: 'F08', awb: 'AWB-008', catatan: 'Heavy' },
-  { id: 'M09', penerbangan_id: 'F09', awb: 'AWB-009', catatan: 'Aman' },
-  { id: 'M10', penerbangan_id: 'F10', awb: 'AWB-010', catatan: 'Aman' },
-];
+  { awb: '001-2847391', pengirim: 'PT Solusi Maju',  tujuan: 'SUB', koli: 3, berat: '50 kg',   penerbangan: 'GA – 136',  status: 'Received',  waktuUpdate: '05.12' },
+  { awb: '001-2847392', pengirim: 'PT Nusantara',    tujuan: 'DPS', koli: 1, berat: '7.5 kg',  penerbangan: 'IU – 602',  status: 'Sortation', waktuUpdate: '05.41' },
+  { awb: '001-2847393', pengirim: 'PT Cahaya Baru',  tujuan: 'MDN', koli: 8, berat: '33 kg',   penerbangan: 'JT – 892',  status: 'Loaded',    waktuUpdate: '06.05' },
+  { awb: '001-2847394', pengirim: 'CV Berkah Jaya',  tujuan: 'UPG', koli: 1, berat: '45 kg',   penerbangan: 'ID – 7531', status: 'Received',  waktuUpdate: '06.03' },
+  { awb: '001-2847395', pengirim: 'UD Makmur',       tujuan: 'BPN', koli: 4, berat: '12.5 kg', penerbangan: 'SJ – 200',  status: 'Departed',  waktuUpdate: '07.22' },
+  { awb: '001-2847396', pengirim: 'PT Permata',      tujuan: 'PLM', koli: 2, berat: '41 kg',   penerbangan: 'GA – 803',  status: 'Sortation', waktuUpdate: '06.47' },
+  { awb: '001-2847397', pengirim: 'CV Mitra Abadi',  tujuan: 'JOG', koli: 1, berat: '120 kg',  penerbangan: 'QG – 778',  status: 'Received',  waktuUpdate: '06.50' },
+  { awb: '001-2847398', pengirim: 'PT Angkasa',      tujuan: 'BDJ', koli: 6, berat: '88 kg',   penerbangan: 'GA – 910',  status: 'Loaded',    waktuUpdate: '07.10' },
+  { awb: '001-2847399', pengirim: 'UD Prima',        tujuan: 'TIM', koli: 2, berat: '27 kg',   penerbangan: 'ID – 820',  status: 'Received',  waktuUpdate: '07.18' },
+  { awb: '001-2847400', pengirim: 'PT Sinar Jaya',   tujuan: 'BTH', koli: 3, berat: '41 kg',   penerbangan: 'SJ – 440',  status: 'Arrived',   waktuUpdate: '07.55' },
+]
 
 // Tambahkan / Ganti bagian customers di app/lib/placeholder-data.ts
 export const customers = [
