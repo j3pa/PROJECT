@@ -1,63 +1,97 @@
-import Topbar    from '@/app/ui/dashboard/topbar'
-import StatCard  from '@/app/ui/dashboard/stat-card'
-import CargoTable, { CargoRow } from '@/app/ui/dashboard/cargo-table'
+import postgres from 'postgres';
+import Topbar from '@/app/ui/dashboard/topbar';
+import StatCard from '@/app/ui/dashboard/stat-card';
+import CargoTable from '@/app/ui/dashboard/cargo-table';
 
+// Inisialisasi koneksi database Neon
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
-const cargoData: CargoRow[] = [
-  { awb: '001-2847391', pengirim: 'PT Solusi Maju',   penerima: 'Rizky Jerico',  tujuan: 'SUB', berat: '50 kg',  penerbangan: 'GA – 136',  waktuMasuk: '05.12', status: 'Received'  },
-  { awb: '001-2847392', pengirim: 'PT Nusantara',     penerima: 'Andi Pratama',  tujuan: 'DPS', berat: '7.5 kg', penerbangan: 'IU – 602',  waktuMasuk: '05.28', status: 'Loaded'    },
-  { awb: '001-2847393', pengirim: 'PT Cahaya Baru',   penerima: 'Dewi Sartika',  tujuan: 'MDN', berat: '33 kg',  penerbangan: 'JT – 892',  waktuMasuk: '05.44', status: 'OnTime' },
-  { awb: '001-2847394', pengirim: 'CV Berkah Jaya',   penerima: 'Hanna Safi',    tujuan: 'UPG', berat: '45 kg',  penerbangan: 'ID – 7531', waktuMasuk: '06.02', status: 'Received'  },
-  { awb: '001-2847395', pengirim: 'UD Makmur',        penerima: 'Immanuel',      tujuan: 'BPN', berat: '12.5 kg',penerbangan: 'SJ – 200',  waktuMasuk: '06.15', status: 'Loaded'    },
-  { awb: '001-2847396', pengirim: 'PT Permata',       penerima: 'Budi Susanto',  tujuan: 'PLM', berat: '41 kg',  penerbangan: 'GA – 803',  waktuMasuk: '06.33', status: 'Received'  },
-  { awb: '001-2847397', pengirim: 'CV Mitra Abadi',   penerima: 'Praka Liam',    tujuan: 'JOG', berat: '120 kg', penerbangan: 'QG – 778',  waktuMasuk: '06.49', status: 'OnTime' },
-]
+export const dynamic = 'force-dynamic';
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  let transactions: any[] = [];
+
+  try {
+    // KEMUNGKINAN 1: Mencoba JOIN standard menggunakan tabel manifest sebagai jembatan
+    transactions = await sql`
+      SELECT 
+        t.*, 
+        p.kode_penerbangan,
+        k.nama_kendaraan,
+        k.kode_kendaraan,
+        b_asal.kota AS kota_asal,
+        b_tujuan.kota AS kota_tujuan
+      FROM transaksi t
+      LEFT JOIN manifest m ON (t.id = m.transaksi_id OR t.resi = m.transaksi_resi)
+      LEFT JOIN penerbangan p ON m.penerbangan_id = p.id
+      LEFT JOIN kendaraan k ON p.kendaraan_id = k.id
+      LEFT JOIN bandara b_asal ON p.bandara_asal_id = b_asal.id
+      LEFT JOIN bandara b_tujuan ON p.bandara_tujuan_id = b_tujuan.id
+      ORDER BY t.tanggal_kirim DESC
+    `;
+  } catch (error) {
+    try {
+      // KEMUNGKINAN 2 (FALLBACK): Jika tabel manifest ternyata tidak punya kaitan langsung,
+      // kita coba tarik data transaksi murni terlebih dahulu agar halaman tidak crash/blank screen
+      transactions = await sql`
+        SELECT * FROM transaksi ORDER BY tanggal_kirim DESC
+      `;
+    } catch (fallbackError) {
+      console.error("Database gagal memuat data kargo:", fallbackError);
+      transactions = [];
+    }
+  }
+
+  // Hitung statistik secara dinamis dari data transaksi yang berhasil ditarik
+  const totalKargo = transactions.length;
+  const totalSelesai = transactions.filter(t => t.status_pengiriman === 'Selesai' || t.status === 'Selesai' || t.status_pengiriman === 'Sampai Tujuan').length;
+  const totalProses = transactions.filter(t => t.status_pengiriman === 'Diproses' || t.status_pengiriman === 'Dalam Pengiriman' || t.status === 'Sortation' || t.status === 'Loaded').length;
+
   return (
     <>
       <Topbar title="Dashboard Operator" />
 
       <div className="p-6">
-        {/* Page heading */}
+        {/* Heading */}
         <div className="mb-5">
           <h1 className="text-[18px] font-bold text-[#0d1a4a]">Dashboard Operator</h1>
           <p className="text-[11px] text-gray-500 mt-0.5">Senin, 06 April 2026 · Shift Pagi</p>
         </div>
 
-        {/* Stat cards */}
+        {/* Statistik */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           <StatCard
-            label="Departed"
-            value="148"
-            sub="+12 dari kemarin"
+            label="Selesai / Sampai"
+            value={totalSelesai.toString()}
+            sub="Kargo sukses terkirim"
             dotColor="#22c55e"
+            valueColor="text-green-600"
           />
           <StatCard
-            label="Delayed"
-            value="97"
-            sub="65.5% dari total"
+            label="Sedang Diproses"
+            value={totalProses.toString()}
+            sub="Dalam manifest aktif"
             dotColor="#f59e0b"
             valueColor="text-orange-600"
           />
           <StatCard
-            label="On-Time"
-            value="34"
-            sub="3 hampir terlambat"
-            dotColor="#2bcf25"
-            valueColor="text-green-600"
+            label="Total Transaksi"
+            value={totalKargo.toString()}
+            sub="Semua riwayat di database"
+            dotColor="#3b82f6"
+            valueColor="text-blue-600"
           />
           <StatCard
-            label="Penerbangan Hari Ini"
-            value="8"
-            sub="2 delayed · 6 on-time"
+            label="Penerbangan Aktif"
+            value="5"
+            sub="Armada udara siap"
             valueColor="text-blue-800"
           />
         </div>
 
-        {/* Cargo table */}
-        <CargoTable data={cargoData} />
+        {/* Komponen Tabel Utama */}
+        <CargoTable transactions={transactions} />
       </div>
     </>
-  )
+  );
 }

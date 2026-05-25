@@ -9,7 +9,7 @@ async function seedKendaraan() {
   await sql`DROP TABLE IF EXISTS transaksi CASCADE;`;
   await sql`DROP TABLE IF EXISTS kendaraan CASCADE;`;
 
-  // Membuat tabel kendaraan dengan atribut lengkap dari PDF
+  // Membuat tabel kendaraan dengan atribut lengkap
   await sql`
     CREATE TABLE kendaraan (
       id VARCHAR(20) PRIMARY KEY,

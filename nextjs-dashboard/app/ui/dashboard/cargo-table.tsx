@@ -1,125 +1,160 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-
-export interface CargoRow {
-  awb: string
-  pengirim: string
-  penerima: string
-  tujuan: string
-  berat: string
-  penerbangan: string
-  waktuMasuk: string
-  status: 'Received' | 'OnTime' | 'Loaded' | 'Departed' | 'Arrived'
-}
-
-const badgeClass: Record<CargoRow['status'], string> = {
-  Received:  'bg-blue-100 text-blue-700',
-  Loaded:    'bg-green-100 text-green-700',
-  OnTime: 'bg-orange-100 text-orange-600',
-  Departed:  'bg-purple-100 text-purple-700',
-  Arrived:   'bg-teal-100 text-teal-700',
-}
-
-const STATUSES: Array<CargoRow['status'] | 'Semua Status'> = [
-  'Semua Status', 'Received', 'OnTime','Loaded' , 'Departed', 'Arrived',
-]
+import { useState } from 'react';
+import Link from 'next/link';
 
 interface CargoTableProps {
-  data: CargoRow[]
+  transactions?: any[];
 }
 
-export default function CargoTable({ data }: CargoTableProps) {
-  const [filter, setFilter] = useState<string>('Semua Status')
+export default function CargoTable({ transactions = [] }: CargoTableProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  const filtered = filter === 'Semua Status'
-    ? data
-    : data.filter(r => r.status === filter)
+  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedData = transactions.slice(startIndex, startIndex + itemsPerPage);
 
-  function handleExport() {
-    const headers = ['No AWB', 'Pengirim', 'Penerima', 'Tujuan', 'Berat', 'Penerbangan', 'Waktu Masuk', 'Status']
-    const rows = filtered.map(r =>
-      [r.awb, r.pengirim, r.penerima, r.tujuan, r.berat, r.penerbangan, r.waktuMasuk, r.status].join(',')
-    )
-    const csv = [headers.join(','), ...rows].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url  = URL.createObjectURL(blob)
-    const a    = Object.assign(document.createElement('a'), { href: url, download: 'kargo-export.csv' })
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+  // Tema Badge Status sesuai visual asli (image_0c395f.png)
+  const badgeStyle: Record<string, string> = {
+    'Received': 'bg-blue-50 text-blue-600 border border-blue-100',
+    'Sortation': 'bg-amber-50 text-amber-600 border border-amber-100',
+    'Loaded': 'bg-gray-100 text-gray-700 border border-gray-200',
+    'OnTime': 'bg-green-50 text-green-600 border border-green-100',
+    'Departed': 'bg-purple-50 text-purple-600 border border-purple-100',
+    // Fallback status database alternatif
+    'Pending': 'bg-gray-50 text-gray-500 border border-gray-200',
+    'Diproses': 'bg-amber-50 text-amber-600 border border-amber-100',
+    'Dalam Pengiriman': 'bg-blue-50 text-blue-600 border border-blue-100',
+    'Sampai Tujuan': 'bg-purple-50 text-purple-600 border border-purple-100',
+    'Selesai': 'bg-green-50 text-green-600 border border-green-100',
+  };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      {/* Table header row */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <h2 className="text-[13px] font-bold text-[#0d1a4a]">Semua Kargo Masuk Hari Ini</h2>
-        <div className="flex items-center gap-2">
-          {/* Filter dropdown */}
-          <div className="relative">
-            <select
-              value={filter}
-              onChange={e => setFilter(e.target.value)}
-              className="appearance-none text-[11.5px] font-semibold border border-gray-200 rounded-lg px-3 py-2 pr-7 bg-white text-gray-700 cursor-pointer focus:outline-none focus:border-blue-400"
-            >
-              {STATUSES.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            <svg className="w-3 h-3 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="4,6 8,10 12,6"/>
-            </svg>
-          </div>
-
-          {/* Export button */}
-          <button
-            onClick={handleExport}
-            className="text-[11.5px] font-semibold border border-gray-200 rounded-lg px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition"
-          >
-            Export
-          </button>
-        </div>
-      </div>
-
-      {/* Table */}
+    <div className="w-full bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-[12px]">
+        <table className="w-full text-[12px] text-left border-collapse">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              {['NO AWB', 'PENGIRIM', 'PENERIMA', 'TUJUAN', 'BERAT', 'PENERBANGAN', 'WAKTU MASUK', 'STATUS'].map(h => (
-                <th key={h} className="text-left px-5 py-3 text-[10.5px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                  {h}
-                </th>
-              ))}
+            <tr className="border-b border-gray-100 bg-gray-50/50">
+              <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">NO AWB</th>
+              <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">PENGIRIM</th>
+              <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">TUJUAN</th>
+              <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">BERAT</th>
+              <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">PENERBANGAN</th>
+              <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">STATUS</th>
+              <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">WAKTU UPDATE</th>
+              <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">AKSI</th>
             </tr>
           </thead>
-          <tbody>
-            {filtered.map((row, i) => (
-              <tr key={row.awb} className={`border-b border-gray-50 hover:bg-blue-50/40 transition ${i % 2 === 0 ? '' : ''}`}>
-                <td className="px-5 py-3 font-mono text-blue-700 font-semibold text-[11px] whitespace-nowrap">{row.awb}</td>
-                <td className="px-5 py-3 text-gray-700 whitespace-nowrap">{row.pengirim}</td>
-                <td className="px-5 py-3 text-gray-500 whitespace-nowrap">{row.penerima}</td>
-                <td className="px-5 py-3 text-gray-700 whitespace-nowrap">{row.tujuan}</td>
-                <td className="px-5 py-3 text-gray-700 whitespace-nowrap">{row.berat}</td>
-                <td className="px-5 py-3 font-mono text-gray-700 text-[11px] whitespace-nowrap">{row.penerbangan}</td>
-                <td className="px-5 py-3 text-gray-700 whitespace-nowrap">{row.waktuMasuk}</td>
-                <td className="px-5 py-3 whitespace-nowrap">
-                  <span className={`${badgeClass[row.status]} text-[10.5px] font-bold px-3 py-1 rounded-full`}>
-                    {row.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-5 py-8 text-center text-gray-400 text-sm">
-                  Tidak ada data untuk filter ini.
-                </td>
-              </tr>
-            )}
+          <tbody className="divide-y divide-gray-50 bg-white">
+            {paginatedData.map((row, i) => {
+              // Pemetaan field fleksibel untuk menjamin data tampil (image_0c395f.png -> image_0d1a1b.png)
+              const resiCode = row.resi || row.awb;
+              const pengirim = row.nama_pengirim || row.pengirim;
+              const statusKargo = row.status_pengiriman || row.status;
+              
+              const tujuan = row.kota_tujuan || row.tujuan || 'SUB';
+              
+              // Normalisasi tampilan string berat kargo
+              let berat = row.berat || row.berat_barang || '0 kg';
+              if (typeof berat === 'number') berat = `${berat} kg`;
+
+              // Tampilan Armada Pesawat
+              const armada = row.nama_kendaraan && row.kode_kendaraan
+                ? `${row.kode_kendaraan}` // Menampilkan kode penerbangan saja agar ringkas seperti GA-136
+                : row.penerbangan || '-';
+
+              // Tampilan Waktu Penerbangan
+              let waktu = row.waktuMasuk || '-';
+              if (row.tanggal_kirim && !row.waktuMasuk) {
+                waktu = new Date(row.tanggal_kirim).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+              }
+
+              return (
+                <tr key={resiCode || i} className="hover:bg-blue-50/10 transition group">
+                  <td className="px-6 py-4 font-mono text-blue-600 font-semibold tracking-tight whitespace-nowrap">
+                    {resiCode}
+                  </td>
+                  <td className="px-6 py-4 text-gray-700 font-medium whitespace-nowrap">
+                    {pengirim}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 font-medium whitespace-nowrap">
+                    {tujuan}
+                  </td>
+                  <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
+                    {berat}
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 font-mono whitespace-nowrap">
+                    {armada}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${badgeStyle[statusKargo] || 'bg-gray-100 text-gray-600'}`}>
+                      {statusKargo}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-400 whitespace-nowrap font-mono text-[11px]">
+                    {waktu}
+                  </td>
+                  
+                  {/* TOMBOL EDIT SESUAI DENGAN FOTO KEDUA (image_0d1a9d.png) */}
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    {resiCode ? (
+                      <Link
+                        href={`/dashboard/manifest/${encodeURIComponent(resiCode)}/edit`}
+                        className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50/60 hover:bg-blue-100 px-2.5 py-1.5 rounded border border-blue-100/50 transition uppercase"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                        </svg>
+                        Edit
+                      </Link>
+                    ) : (
+                      <span className="text-gray-300">-</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Footer */}
+      <div className="px-6 py-4 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between text-[11px]">
+        <p className="text-gray-400 font-medium">
+          Total <span className="text-blue-600 font-bold">{transactions.length}</span> kargo · 2 sudah dikirim
+        </p>
+        
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-2.5 py-1 text-gray-500 bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40 transition"
+            >
+              ← Sebelumnya
+            </button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, idx) => (
+                <button
+                  key={idx + 1}
+                  onClick={() => setCurrentPage(idx + 1)}
+                  className={`w-6 h-6 rounded text-center font-bold transition ${currentPage === idx + 1 ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'}`}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-2.5 py-1 text-gray-500 bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40 transition"
+            >
+              Berikutnya →
+            </button>
+          </div>
+        )}
+      </div>
     </div>
-  )
+  );
 }
