@@ -1,127 +1,92 @@
+export const dynamic = 'force-dynamic';
+
 import postgres from 'postgres';
-import { bandara, penerbangan, cargo, manifest, customers } from '../lib/placeholder-data';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
-// 1. SEED CUSTOMERS
-async function seedCustomers() {
+// 1. SEED TABEL KENDARAAN (Sesuai Syarat UGD)
+async function seedKendaraan() {
+  await sql`DROP TABLE IF EXISTS transaksi CASCADE;`;
+  await sql`DROP TABLE IF EXISTS kendaraan CASCADE;`;
+
+  // Membuat tabel kendaraan dengan atribut lengkap dari PDF
   await sql`
-    CREATE TABLE IF NOT EXISTS customers (
-      id VARCHAR(255) PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
-      email VARCHAR(255) NOT NULL UNIQUE,
-      image_url VARCHAR(255) NOT NULL
+    CREATE TABLE kendaraan (
+      id VARCHAR(20) PRIMARY KEY,
+      nama_kendaraan VARCHAR(100) NOT NULL,
+      jenis_kendaraan VARCHAR(50) NOT NULL,
+      kode_kendaraan VARCHAR(50) NOT NULL,
+      kapasitas_muatan INT NOT NULL,
+      status_kendaraan VARCHAR(50) NOT NULL
     );
   `;
 
+  // Insert data dummy Pesawat Ekspedisi Petir
+  const dataKendaraan = [
+    { id: 'K-001', nama: 'Boeing 737F', jenis: 'Pesawat Udara', kode: 'PK-SBT01', kapasitas: 20000, status: 'Aktif' },
+    { id: 'K-002', nama: 'Airbus A330F', jenis: 'Pesawat Udara', kode: 'PK-SBT02', kapasitas: 65000, status: 'Maintenance' }
+  ];
+
   return Promise.all(
-    customers.map((c) => sql`
-      INSERT INTO customers (id, name, email, image_url)
-      VALUES (${c.id}, ${c.name}, ${c.email}, ${c.image_url})
-      ON CONFLICT (id) DO NOTHING;
+    dataKendaraan.map((k) => sql`
+      INSERT INTO kendaraan (id, nama_kendaraan, jenis_kendaraan, kode_kendaraan, kapasitas_muatan, status_kendaraan)
+      VALUES (${k.id}, ${k.nama}, ${k.jenis}, ${k.kode}, ${k.kapasitas}, ${k.status})
     `)
   );
 }
 
-// 2. SEED MASTER BANDARA
-async function seedBandara() {
+// 2. SEED TABEL TRANSAKSI / CARGO (Sesuai Syarat UGD)
+async function seedTransaksi() {
+  // Membuat tabel transaksi dengan seluruh field wajib dari dosen
   await sql`
-    CREATE TABLE IF NOT EXISTS bandara (
-      id VARCHAR(10) PRIMARY KEY,
-      kode VARCHAR(10) NOT NULL UNIQUE,
-      nama VARCHAR(255) NOT NULL,
-      kota VARCHAR(255) NOT NULL
+    CREATE TABLE transaksi (
+      resi VARCHAR(50) PRIMARY KEY,
+      tanggal_kirim DATE NOT NULL,
+      nama_pengirim VARCHAR(100) NOT NULL,
+      nama_penerima VARCHAR(100) NOT NULL,
+      no_telepon VARCHAR(20) NOT NULL,
+      kota_asal VARCHAR(50) NOT NULL,
+      kota_tujuan VARCHAR(50) NOT NULL,
+      jenis_barang VARCHAR(50) NOT NULL,
+      berat_barang DECIMAL NOT NULL,
+      tarif INT NOT NULL,
+      jenis_pengiriman VARCHAR(30) NOT NULL,
+      kendaraan_id VARCHAR(20) REFERENCES kendaraan(id),
+      status_pengiriman VARCHAR(50) NOT NULL,
+      catatan TEXT
     );
   `;
 
+  // Insert data dummy kargo
+  const dataTransaksi = [
+    {
+      resi: 'AWB-20260525-001', tanggal: '2026-05-25', pengirim: 'PT Solusi Maju', penerima: 'Rizky Jerico',
+      telp: '081234567890', asal: 'Jakarta', tujuan: 'Surabaya', barang: 'Elektronik', berat: 50,
+      tarif: 1500000, jenis: 'Cepat', kendaraan_id: 'K-001', status: 'Diproses', catatan: 'Fragile, Jangan Dibanting'
+    },
+    {
+      resi: 'AWB-20260525-002', tanggal: '2026-05-25', pengirim: 'PT Nusantara', penerima: 'Andi Pratama',
+      telp: '089876543210', asal: 'Jakarta', tujuan: 'Bali', barang: 'Dokumen', berat: 2.5,
+      tarif: 250000, jenis: 'Vvip', kendaraan_id: 'K-001', status: 'Dalam Pengiriman', catatan: 'Dokumen Rahasia'
+    }
+  ];
+
   return Promise.all(
-    bandara.map((b) => sql`
-      INSERT INTO bandara (id, kode, nama, kota)
-      VALUES (${b.id}, ${b.kode}, ${b.nama}, ${b.kota})
-      ON CONFLICT (id) DO NOTHING;
+    dataTransaksi.map((t) => sql`
+      INSERT INTO transaksi (resi, tanggal_kirim, nama_pengirim, nama_penerima, no_telepon, kota_asal, kota_tujuan, jenis_barang, berat_barang, tarif, jenis_pengiriman, kendaraan_id, status_pengiriman, catatan)
+      VALUES (${t.resi}, ${t.tanggal}, ${t.pengirim}, ${t.penerima}, ${t.telp}, ${t.asal}, ${t.tujuan}, ${t.barang}, ${t.berat}, ${t.tarif}, ${t.jenis}, ${t.kendaraan_id}, ${t.status}, ${t.catatan})
     `)
   );
 }
 
-// 3. SEED MASTER PENERBANGAN
-async function seedPenerbangan() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS penerbangan (
-      id VARCHAR(10) PRIMARY KEY,
-      nomor VARCHAR(20) NOT NULL,
-      asal_id VARCHAR(10) REFERENCES bandara(id),
-      tujuan_id VARCHAR(10) REFERENCES bandara(id),
-      waktu VARCHAR(20) NOT NULL
-    );
-  `;
-
-  return Promise.all(
-    penerbangan.map((p) => sql`
-      INSERT INTO penerbangan (id, nomor, asal_id, tujuan_id, waktu)
-      VALUES (${p.id}, ${p.nomor}, ${p.asal_id}, ${p.tujuan_id}, ${p.waktu})
-      ON CONFLICT (id) DO NOTHING;
-    `)
-  );
-}
-
-// 4. SEED CARGO (LOG TRACKING)
-async function seedCargo() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS cargo (
-      awb VARCHAR(50) PRIMARY KEY,
-      customer_email VARCHAR(255) REFERENCES customers(email),
-      tujuan_id VARCHAR(10) REFERENCES bandara(id),
-      berat INT NOT NULL,
-      status VARCHAR(50) NOT NULL
-    );
-  `;
-
-  return Promise.all(
-    cargo.map((c) => sql`
-      INSERT INTO cargo (awb, customer_email, tujuan_id, berat, status)
-      VALUES (${c.awb}, ${c.customer_email}, ${c.tujuan_id}, ${c.berat}, ${c.status})
-      ON CONFLICT (awb) DO NOTHING;
-    `)
-  );
-}
-
-// 5. SEED MANIFEST HARIAN (Tabel Tampilan Utama Dashboard)
-async function seedManifest() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS manifest (
-      awb VARCHAR(50) PRIMARY KEY,
-      pengirim VARCHAR(255) NOT NULL,
-      tujuan VARCHAR(50) NOT NULL,
-      koli INT NOT NULL,
-      berat VARCHAR(50) NOT NULL,
-      penerbangan VARCHAR(50) NOT NULL,
-      status VARCHAR(50) NOT NULL,
-      waktu_update VARCHAR(20) NOT NULL
-    );
-  `;
-
-  return Promise.all(
-    manifest.map((m) => sql`
-      INSERT INTO manifest (awb, pengirim, tujuan, koli, berat, penerbangan, status, waktu_update)
-      VALUES (${m.awb}, ${m.pengirim}, ${m.tujuan}, ${m.koli}, ${m.berat}, ${m.penerbangan}, ${m.status}, ${m.waktuUpdate})
-      ON CONFLICT (awb) DO NOTHING;
-    `)
-  );
-}
-
-// ROUTE UTAMA YANG DIJALANKAN DI BROWSER (/seed)
 export async function GET() {
   try {
-    // Jalankan transaksi pendaftaran berurutan sesuai prioritas relasi (FK)
-    await seedCustomers();
-    await seedBandara();
-    await seedPenerbangan();
-    await seedCargo();
-    await seedManifest();
-
-    return Response.json({ message: 'Database Ekspedisi Petir seeded successfully' });
-  } catch (error) {
+    await seedKendaraan();
+    await seedTransaksi();
+    
+    return Response.json({ message: 'Database UGD SIWEB berhasil disinkronkan!' });
+  } catch (error: any) {
     console.error('Seeding Error:', error);
-    return Response.json({ error: 'Gagal melakukan seeding database', details: error }, { status: 500 });
+    return Response.json({ error: error.message || error }, { status: 500 });
   }
 }
