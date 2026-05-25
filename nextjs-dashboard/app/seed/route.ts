@@ -84,7 +84,7 @@ export async function GET() {
     await seedKendaraan();
     await seedTransaksi();
     
-    return Response.json({ message: 'Database UGD SIWEB berhasil disinkronkan!' });
+    return Response.json({ message: 'Database berhasil disinkronkan!' });
   } catch (error: any) {
     console.error('Seeding Error:', error);
     return Response.json({ error: error.message || error }, { status: 500 });
