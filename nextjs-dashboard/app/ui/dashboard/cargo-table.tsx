@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+// Import action deleteTransaction dari lib actions kamu
+import { deleteTransaction } from '@/app/lib/actions';
 
 interface CargoTableProps {
   transactions?: any[];
@@ -9,13 +11,31 @@ interface CargoTableProps {
 
 export default function CargoTable({ transactions = [] }: CargoTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const itemsPerPage = 5;
 
   const totalPages = Math.ceil(transactions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = transactions.slice(startIndex, startIndex + itemsPerPage);
 
-  // Tema Badge Status sesuai visual asli (image_0c395f.png)
+  // Fungsi konfirmasi dan eksekusi delete data ke database Neon
+  const handleDelete = async (resi: string) => {
+    const confirmDelete = window.confirm(`Apakah Anda yakin ingin menghapus transaksi dengan No AWB: ${resi}?`);
+    if (!confirmDelete) return;
+
+    try {
+      setIsDeleting(resi);
+      await deleteTransaction(resi);
+      alert('Data kargo berhasil dihapus secara permanen!');
+    } catch (error) {
+      alert('Gagal menghapus data kargo.');
+      console.error(error);
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
+  // Tema Badge Status sesuai visual asli
   const badgeStyle: Record<string, string> = {
     'Received': 'bg-blue-50 text-blue-600 border border-blue-100',
     'Sortation': 'bg-amber-50 text-amber-600 border border-amber-100',
@@ -48,23 +68,18 @@ export default function CargoTable({ transactions = [] }: CargoTableProps) {
           </thead>
           <tbody className="divide-y divide-gray-50 bg-white">
             {paginatedData.map((row, i) => {
-              // Pemetaan field fleksibel untuk menjamin data tampil (image_0c395f.png -> image_0d1a1b.png)
               const resiCode = row.resi || row.awb;
               const pengirim = row.nama_pengirim || row.pengirim;
               const statusKargo = row.status_pengiriman || row.status;
-              
               const tujuan = row.kota_tujuan || row.tujuan || 'SUB';
               
-              // Normalisasi tampilan string berat kargo
               let berat = row.berat || row.berat_barang || '0 kg';
               if (typeof berat === 'number') berat = `${berat} kg`;
 
-              // Tampilan Armada Pesawat
               const armada = row.nama_kendaraan && row.kode_kendaraan
-                ? `${row.kode_kendaraan}` // Menampilkan kode penerbangan saja agar ringkas seperti GA-136
+                ? `${row.kode_kendaraan}`
                 : row.penerbangan || '-';
 
-              // Tampilan Waktu Penerbangan
               let waktu = row.waktuMasuk || '-';
               if (row.tanggal_kirim && !row.waktuMasuk) {
                 waktu = new Date(row.tanggal_kirim).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -96,18 +111,33 @@ export default function CargoTable({ transactions = [] }: CargoTableProps) {
                     {waktu}
                   </td>
                   
-                  {/* TOMBOL EDIT SESUAI DENGAN FOTO KEDUA (image_0d1a9d.png) */}
+                  {/* KOLOM AKSI: EDIT & DELETE */}
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     {resiCode ? (
-                      <Link
-                        href={`/dashboard/manifest/${encodeURIComponent(resiCode)}/edit`}
-                        className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50/60 hover:bg-blue-100 px-2.5 py-1.5 rounded border border-blue-100/50 transition uppercase"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-                        </svg>
-                        Edit
-                      </Link>
+                      <div className="flex items-center justify-center gap-1.5">
+                        {/* Tombol Edit */}
+                        <Link
+                          href={`/dashboard/manifest/${encodeURIComponent(resiCode)}/edit`}
+                          className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50/60 hover:bg-blue-100 px-2.5 py-1.5 rounded border border-blue-100/50 transition uppercase"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                          </svg>
+                          Edit
+                        </Link>
+
+                        {/* Tombol Delete Baru */}
+                        <button
+                          onClick={() => handleDelete(resiCode)}
+                          disabled={isDeleting === resiCode}
+                          className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded border border-red-100/50 transition uppercase disabled:opacity-50"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                          </svg>
+                          {isDeleting === resiCode ? '...' : 'Delete'}
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-gray-300">-</span>
                     )}
