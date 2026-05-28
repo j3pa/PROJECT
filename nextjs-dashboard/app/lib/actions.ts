@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
-// membuat transaksi baru
+// MEMBUAT TRANSAKSI BARU
 export async function createTransaksi(formData: FormData) {
   // Generate otomatis Nomor AWB / Resi
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -37,8 +37,8 @@ export async function createTransaksi(formData: FormData) {
     // Jalankan transaksi database (Transaction Block) agar kedua insert wajib sukses bersamaan
     await sql.begin(async (sql) => {
       
-      // 1. Masukkan data murni kargo ke tabel transaksi (Tanpa kendaraan_id karena tidak ada di tabel ini)
-      const [newTx] = await sql`
+      // 1. Masukkan data murni kargo ke tabel transaksi (Dihapus RETURNING id karena kolom id tidak ada)
+      await sql`
         INSERT INTO transaksi (
           resi, tanggal_kirim, nama_pengirim, nama_penerima, no_telepon, 
           kota_asal, kota_tujuan, jenis_barang, berat, tarif, 
@@ -48,19 +48,17 @@ export async function createTransaksi(formData: FormData) {
           ${kota_asal}, ${kota_tujuan}, ${jenis_barang}, ${berat}, ${tarif}, 
           ${jenis_pengiriman}, ${status_pengiriman}, ${catatan}
         )
-        RETURNING id
       `;
 
       // 2. Jika form memilih jadwal penerbangan, ikat hubungan mereka di tabel jembatan 'manifest'
+      // Hanya menyertakan kolom transaksi_resi (kolom transaksi_id dihapus agar tidak error)
       if (penerbangan_id) {
         await sql`
           INSERT INTO manifest (
-            transaksi_id, 
             transaksi_resi, 
             penerbangan_id, 
             status_manifest
           ) VALUES (
-            ${newTx.id}, 
             ${resi}, 
             ${penerbangan_id}, 
             ${status_pengiriman}
@@ -82,29 +80,37 @@ export async function createTransaksi(formData: FormData) {
   redirect('/dashboard/manifest');
 }
 
-// menghapus data
+// MENGHAPUS DATA 
+// MENGHAPUS DATA TRANSAKSI KARGO SECARA AMAN & BERURUTAN
+// MENGHAPUS DATA TRANSAKSI KARGO DENGAN TRANSPARENT ERROR LOGGING
 export async function deleteTransaction(resi: string) {
   try {
-    // Menggunakan Safe-Cascade manual agar tidak bentrok dengan Foreign Key Constraint database
-    await sql.begin(async (sql) => {
-      // 1. Singkirkan relasi penjadwalan penerbangan di tabel manifest terlebih dahulu
-      await sql`
-        DELETE FROM manifest WHERE transaksi_resi = ${resi}
-      `;
+    console.log(`[DEBUG] Mencoba menghapus kargo dengan resi: ${resi}`);
 
-      // 2. Hapus baris data utamanya di tabel transaksi
-      await sql`
-        DELETE FROM transaksi WHERE resi = ${resi}
-      `;
-    });
+    // 1. Hapus terlebih dahulu dari tabel manifest berdasarkan transaksi_resi
+    await sql`
+      DELETE FROM manifest WHERE transaksi_resi = ${resi}
+    `;
 
-    // Perbarui cache tampilan client-side Next.js secara live
+    // 2. Hapus dari tabel transaksi utama
+    const result = await sql`
+      DELETE FROM transaksi WHERE resi = ${resi}
+    `;
+    
+    console.log(`[DEBUG] Berhasil dihapus. Jumlah baris terpengaruh: ${result.count}`);
+
+    // Amankan pembaruan cache Next.js
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/manifest');
     
     return { success: true };
-  } catch (error) {
-    console.error('Gagal menghapus kargo:', error);
-    throw new Error('Gagal mengeksekusi penghapusan data dari database.');
+  } catch (error: any) {
+    // MENAMPILKAN ERROR ASLI DI TERMINAL
+    console.error('=== ERROR ASLI DARI DATABASE NEON ===');
+    console.error(error);
+    console.error('======================================');
+    
+    // MELEMPAR ERROR ASLI KE BROWSER AGAR TIDAK MUNCUL "Gagal menghapus data kargo" SAJA
+    throw new Error(`Detail Error: ${error.message || error}`);
   }
 }
