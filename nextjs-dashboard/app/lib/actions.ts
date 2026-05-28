@@ -6,6 +6,76 @@ import { redirect } from 'next/navigation';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
+// FUNGSI UNTUK MELACAK NOMOR AWB DARI DATABASE REAL-TIME
+export async function getTrackingData(resi: string) {
+  try {
+    // Cari data kargo utama gabungan dengan manifest penjadwalan penerbangannya
+    const rows = await sql`
+      SELECT 
+        t.resi as awb,
+        t.nama_pengirim as pengirim,
+        t.nama_penerima as penerima,
+        CONCAT(t.berat, ' kg') as berat,
+        t.kota_tujuan as tujuan,
+        COALEDCE(m.penerbangan_id, '-') as penerbangan,
+        t.status_pengiriman as status,
+        t.tanggal_kirim
+      FROM transaksi t
+      LEFT JOIN manifest m ON t.resi = m.transaksi_resi
+      WHERE t.resi = ${resi.trim()}
+    `;
+
+    if (rows.length === 0) return null;
+
+    const cargo = rows[0];
+
+    // Generate riwayat step otomatis berdasarkan status dinamis database
+    const stepLabels = ['Received', 'Sortation', 'Loaded to Aircraft', 'Departed', 'Arrived'];
+    const currentStatus = cargo.status; // Mengambil data string status dari kolom database
+    const statusIndex = stepLabels.indexOf(currentStatus);
+
+    // Pembuatan array checkpoint linimasa manifest kargo
+    const steps = stepLabels.map((label, index) => {
+      let time = '-';
+      let desc = '';
+
+      if (label === 'Received') {
+        time = new Date(cargo.tanggal_kirim).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        desc = 'Barang diterima di gudang Bandara Sudirman';
+      } else if (label === 'Sortation') {
+        desc = 'Barang selesai melalui proses sortasi wilayah';
+      } else if (label === 'Loaded to Aircraft') {
+        desc = `Barang dimuat ke armada penerbangan ${cargo.penerbangan}`;
+      } else if (label === 'Departed') {
+        desc = 'Pesawat lepas landas meninggalkan bandara asal';
+      } else if (label === 'Arrived') {
+        desc = `Barang sukses mendarat di bandara tujuan ${cargo.tujuan}`;
+      }
+
+      return {
+        label,
+        time,
+        desc,
+        done: index <= statusIndex,
+        current: index === statusIndex
+      };
+    });
+
+    return {
+      awb: cargo.awb,
+      pengirim: cargo.pengirim,
+      penerima: cargo.penerima,
+      berat: cargo.berat,
+      tujuan: cargo.tujuan,
+      penerbangan: cargo.penerbangan,
+      status: cargo.status,
+      steps: steps
+    };
+  } catch (error) {
+    console.error('Gagal mengambil data tracking:', error);
+    return null;
+  }
+}
 // MEMBUAT TRANSAKSI BARU
 export async function createTransaksi(formData: FormData) {
   // Generate otomatis Nomor AWB / Resi
@@ -80,9 +150,7 @@ export async function createTransaksi(formData: FormData) {
   redirect('/dashboard/manifest');
 }
 
-// MENGHAPUS DATA 
-// MENGHAPUS DATA TRANSAKSI KARGO SECARA AMAN & BERURUTAN
-// MENGHAPUS DATA TRANSAKSI KARGO DENGAN TRANSPARENT ERROR LOGGING
+
 export async function deleteTransaction(resi: string) {
   try {
     console.log(`[DEBUG] Mencoba menghapus kargo dengan resi: ${resi}`);
