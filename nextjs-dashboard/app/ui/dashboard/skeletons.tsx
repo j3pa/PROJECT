@@ -1,4 +1,3 @@
-// app/ui/dashboard/skeletons.tsx
 
 const shimmer =
   'before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent';
@@ -96,6 +95,37 @@ export function FlightTableSkeleton() {
           <div className="h-10 w-full bg-white rounded-lg shadow-sm border border-gray-100" />
           <div className="h-10 w-full bg-white rounded-lg shadow-sm border border-gray-100" />
           <div className="h-10 w-full bg-white rounded-lg shadow-sm border border-gray-100" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- SKELETON UNTUK HALAMAN TRACKING LOG ---
+export function LogTableSkeleton() {
+  return (
+    <div className={`${shimmer} relative overflow-hidden space-y-6 p-6`}>
+      <div className="space-y-2">
+        <div className="h-7 w-52 rounded bg-gray-200" />
+        <div className="h-4 w-72 rounded bg-gray-100" />
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex gap-3">
+          <div className="h-9 w-28 rounded-full bg-gray-200" />
+          <div className="h-9 w-28 rounded-full bg-gray-100" />
+          <div className="h-9 w-28 rounded-full bg-gray-100" />
+        </div>
+        <div className="h-10 w-40 rounded-lg bg-gray-200" />
+      </div>
+
+      <div className="overflow-hidden rounded-xl bg-gray-50 p-4 min-h-[340px]">
+        <div className="h-10 w-full rounded bg-gray-200 mb-4" />
+        <div className="space-y-3">
+          <div className="h-10 w-full rounded-lg bg-white border border-gray-100 shadow-sm" />
+          <div className="h-10 w-full rounded-lg bg-white border border-gray-100 shadow-sm" />
+          <div className="h-10 w-full rounded-lg bg-white border border-gray-100 shadow-sm" />
+          <div className="h-10 w-full rounded-lg bg-white border border-gray-100 shadow-sm" />
         </div>
       </div>
     </div>

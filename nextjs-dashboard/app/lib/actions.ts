@@ -3,25 +3,113 @@
 import postgres from 'postgres';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { z } from 'zod';
+import { getServerSession } from '@/app/lib/auth';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const statusOptions = ['Pending', 'Diproses', 'Dalam Pengiriman', 'Sampai Tujuan', 'Selesai'] as const;
+const jenisPengirimanOptions = ['Biasa', 'Cepat', 'Vvip'] as const;
+
+const transaksiSchema = z.object({
+  tanggal_kirim: z.string().min(1, 'Tanggal kirim wajib diisi.'),
+  nama_pengirim: z.string().trim().min(2, 'Nama pengirim wajib diisi.'),
+  nama_penerima: z.string().trim().min(2, 'Nama penerima wajib diisi.'),
+  no_telepon: z.string().trim().length(12, 'Nomor telepon wajib tepat 12 angka.').regex(/^[0-9]+$/, 'Nomor telepon hanya boleh berisi angka.'),
+  kota_asal: z.string().trim().min(2, 'Kota asal wajib diisi.'),
+  kota_tujuan: z.string().trim().min(2, 'Kota tujuan wajib diisi.'),
+  jenis_barang: z.string().trim().min(2, 'Jenis barang wajib diisi.'),
+  kendaraan_id: z.string().trim().min(1, 'Kendaraan wajib dipilih.'),
+  berat_barang: z.coerce.number().positive('Berat barang harus lebih dari 0.'),
+  tarif: z.coerce.number().nonnegative('Tarif pengiriman harus angka valid.'),
+  jenis_pengiriman: z.enum(jenisPengirimanOptions),
+  status_pengiriman: z.enum(statusOptions),
+  catatan: z.string().trim().min(5, 'Deskripsi barang wajib diisi minimal 5 karakter.').max(500, 'Catatan maksimal 500 karakter.'),
+});
+
+const kendaraanSchema = z.object({
+  nama_kendaraan: z.string().trim().min(2, 'Nama kendaraan wajib diisi.'),
+  jenis_kendaraan: z.string().trim().min(2, 'Jenis kendaraan wajib diisi.'),
+  kode_kendaraan: z.string().trim().min(3, 'Kode kendaraan wajib diisi.'),
+  kapasitas_muatan: z.coerce.number().positive('Kapasitas muatan harus lebih dari 0.'),
+  status_kendaraan: z.enum(['Aktif', 'Tersedia', 'Maintenance', 'Tidak Tersedia']),
+});
+
+function getValidationMessage(error: z.ZodError) {
+  return error.issues.map((issue) => issue.message).join(' ');
+}
+
+async function getOperatorName() {
+  const session = await getServerSession();
+  return session?.username || 'Andika';
+}
+
+async function insertTrackingLog(
+  sqlClient: typeof sql,
+  {
+    resi,
+    previousStatus,
+    newStatus,
+    operatorName,
+    keterangan,
+  }: {
+    resi: string;
+    previousStatus: string;
+    newStatus: string;
+    operatorName: string;
+    keterangan: string;
+  },
+) {
+  await sqlClient`
+    INSERT INTO tracking_logs (
+      resi,
+      previous_status,
+      new_status,
+      operator_name,
+      keterangan,
+      occurred_at,
+      created_at,
+      updated_at
+    ) VALUES (
+      ${resi},
+      ${previousStatus},
+      ${newStatus},
+      ${operatorName},
+      ${keterangan},
+      NOW(),
+      NOW(),
+      NOW()
+    )
+  `;
+}
+
+async function generateKendaraanId() {
+  const lastKendaraan = await sql`
+    SELECT id
+    FROM kendaraan
+    ORDER BY id DESC
+    LIMIT 1
+  `;
+
+  const currentNumber = Number(String(lastKendaraan[0]?.id || 'K-000').split('-')[1] || '0');
+  return `K-${String(currentNumber + 1).padStart(3, '0')}`;
+}
 
 // FUNGSI UNTUK MELACAK NOMOR AWB DARI DATABASE REAL-TIME
 export async function getTrackingData(resi: string) {
   try {
-    // Cari data kargo utama gabungan dengan manifest penjadwalan penerbangannya
+    // Cari data kargo utama dan padankan dengan kendaraan aktif yang membawanya
     const rows = await sql`
       SELECT 
         t.resi as awb,
         t.nama_pengirim as pengirim,
         t.nama_penerima as penerima,
-        CONCAT(t.berat, ' kg') as berat,
+        CONCAT(t.berat_barang, ' kg') as berat,
         t.kota_tujuan as tujuan,
-        COALEDCE(m.penerbangan_id, '-') as penerbangan,
+        COALESCE(k.kode_kendaraan, '-') as penerbangan,
         t.status_pengiriman as status,
         t.tanggal_kirim
       FROM transaksi t
-      LEFT JOIN manifest m ON t.resi = m.transaksi_resi
+      LEFT JOIN kendaraan k ON t.kendaraan_id = k.id
       WHERE t.resi = ${resi.trim()}
     `;
 
@@ -30,7 +118,7 @@ export async function getTrackingData(resi: string) {
     const cargo = rows[0];
 
     // Generate riwayat step otomatis berdasarkan status dinamis database
-    const stepLabels = ['Received', 'Sortation', 'Loaded to Aircraft', 'Departed', 'Arrived'];
+    const stepLabels = ['Pending', 'Diproses', 'Dalam Pengiriman', 'Sampai Tujuan', 'Selesai'];
     const currentStatus = cargo.status; // Mengambil data string status dari kolom database
     const statusIndex = stepLabels.indexOf(currentStatus);
 
@@ -39,17 +127,17 @@ export async function getTrackingData(resi: string) {
       let time = '-';
       let desc = '';
 
-      if (label === 'Received') {
+      if (label === 'Pending') {
         time = new Date(cargo.tanggal_kirim).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
         desc = 'Barang diterima di gudang Bandara Sudirman';
-      } else if (label === 'Sortation') {
+      } else if (label === 'Diproses') {
         desc = 'Barang selesai melalui proses sortasi wilayah';
-      } else if (label === 'Loaded to Aircraft') {
+      } else if (label === 'Dalam Pengiriman') {
         desc = `Barang dimuat ke armada penerbangan ${cargo.penerbangan}`;
-      } else if (label === 'Departed') {
-        desc = 'Pesawat lepas landas meninggalkan bandara asal';
-      } else if (label === 'Arrived') {
-        desc = `Barang sukses mendarat di bandara tujuan ${cargo.tujuan}`;
+      } else if (label === 'Sampai Tujuan') {
+        desc = `Barang telah tiba di kota tujuan ${cargo.tujuan}`;
+      } else if (label === 'Selesai') {
+        desc = `Barang selesai diterima oleh penerima di ${cargo.tujuan}`;
       }
 
       return {
@@ -83,60 +171,91 @@ export async function createTransaksi(formData: FormData) {
   const randomNum = Math.floor(1000 + Math.random() * 9000);
   const resi = `AWB-${dateStr}-${randomNum}`;
 
-  // Ambil data esensial dari form input
-  const tanggal_kirim = formData.get('tanggal_kirim') as string;
-  const nama_pengirim = formData.get('nama_pengirim') as string;
-  const nama_penerima = formData.get('nama_penerima') as string;
-  const no_telepon = formData.get('no_telepon') as string;
-  const kota_asal = formData.get('kota_asal') as string;
-  const kota_tujuan = formData.get('kota_tujuan') as string;
-  const jenis_barang = formData.get('jenis_barang') as string;
-  
-  // Sesuai kecocokan nama field database Neon (menggunakan 'berat' atau 'tarif' angka)
-  const berat = Number(formData.get('berat_barang') || formData.get('berat'));
-  const tarif = Number(formData.get('tarif'));
-  
-  const jenis_pengiriman = formData.get('jenis_pengiriman') as string;
-  const status_pengiriman = formData.get('status_pengiriman') as string;
-  const catatan = formData.get('catatan') as string;
+  const parsed = transaksiSchema.safeParse({
+    tanggal_kirim: formData.get('tanggal_kirim'),
+    nama_pengirim: formData.get('nama_pengirim'),
+    nama_penerima: formData.get('nama_penerima'),
+    no_telepon: formData.get('no_telepon'),
+    kota_asal: formData.get('kota_asal'),
+    kota_tujuan: formData.get('kota_tujuan'),
+    jenis_barang: formData.get('jenis_barang'),
+    kendaraan_id: formData.get('kendaraan_id'),
+    berat_barang: formData.get('berat_barang') || formData.get('berat'),
+    tarif: formData.get('tarif'),
+    jenis_pengiriman: formData.get('jenis_pengiriman'),
+    status_pengiriman: formData.get('status_pengiriman'),
+    catatan: formData.get('catatan') || '',
+  });
 
-  // Id jadwal penerbangan pilihan dari form
-  const penerbangan_id = formData.get('penerbangan_id') as string;
+  if (!parsed.success) {
+    throw new Error(getValidationMessage(parsed.error));
+  }
+
+  const {
+    tanggal_kirim,
+    nama_pengirim,
+    nama_penerima,
+    no_telepon,
+    kota_asal,
+    kota_tujuan,
+    jenis_barang,
+    kendaraan_id,
+    berat_barang,
+    tarif,
+    jenis_pengiriman,
+    status_pengiriman,
+    catatan,
+  } = parsed.data;
+  const operatorName = await getOperatorName();
 
   try {
-    // Jalankan transaksi database (Transaction Block) agar kedua insert wajib sukses bersamaan
-    await sql.begin(async (sql) => {
-      
-      // 1. Masukkan data murni kargo ke tabel transaksi (Dihapus RETURNING id karena kolom id tidak ada)
-      await sql`
+    await sql.begin(async (trx) => {
+      await trx`
         INSERT INTO transaksi (
-          resi, tanggal_kirim, nama_pengirim, nama_penerima, no_telepon, 
-          kota_asal, kota_tujuan, jenis_barang, berat, tarif, 
-          jenis_pengiriman, status_pengiriman, catatan
+          resi,
+          tanggal_kirim,
+          nama_pengirim,
+          nama_penerima,
+          no_telepon,
+          kota_asal,
+          kota_tujuan,
+          jenis_barang,
+          berat_barang,
+          tarif,
+          jenis_pengiriman,
+          kendaraan_id,
+          status_pengiriman,
+          catatan,
+          created_at,
+          updated_at
         ) VALUES (
-          ${resi}, ${tanggal_kirim}, ${nama_pengirim}, ${nama_penerima}, ${no_telepon}, 
-          ${kota_asal}, ${kota_tujuan}, ${jenis_barang}, ${berat}, ${tarif}, 
-          ${jenis_pengiriman}, ${status_pengiriman}, ${catatan}
+          ${resi},
+          ${tanggal_kirim},
+          ${nama_pengirim},
+          ${nama_penerima},
+          ${no_telepon},
+          ${kota_asal},
+          ${kota_tujuan},
+          ${jenis_barang},
+          ${berat_barang},
+          ${tarif},
+          ${jenis_pengiriman},
+          ${kendaraan_id},
+          ${status_pengiriman},
+          ${catatan},
+          NOW(),
+          NOW()
         )
       `;
 
-      // 2. Jika form memilih jadwal penerbangan, ikat hubungan mereka di tabel jembatan 'manifest'
-      // Hanya menyertakan kolom transaksi_resi (kolom transaksi_id dihapus agar tidak error)
-      if (penerbangan_id) {
-        await sql`
-          INSERT INTO manifest (
-            transaksi_resi, 
-            penerbangan_id, 
-            status_manifest
-          ) VALUES (
-            ${resi}, 
-            ${penerbangan_id}, 
-            ${status_pengiriman}
-          )
-        `;
-      }
+      await insertTrackingLog(trx, {
+        resi,
+        previousStatus: '---',
+        newStatus: status_pengiriman,
+        operatorName,
+        keterangan: `Data cargo baru dibuat untuk tujuan ${kota_tujuan}.`,
+      });
     });
-
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Gagal menambah data transaksi kargo ke database Neon.');
@@ -145,22 +264,79 @@ export async function createTransaksi(formData: FormData) {
   // Bersihkan cache agar data baru langsung muncul di tabel dashboard operator
   revalidatePath('/dashboard');
   revalidatePath('/dashboard/manifest');
+  revalidatePath('/dashboard/tracking');
+  revalidatePath('/dashboard/logs');
   
   // Alihkan halaman kembali ke list manifest
   redirect('/dashboard/manifest');
 }
 
+export async function updateTransaksi(resi: string, formData: FormData) {
+  const parsed = z.object({
+    kendaraan_id: z.string().trim().min(1, 'Kendaraan wajib dipilih.'),
+    status_pengiriman: z.enum(statusOptions),
+    tarif: z.coerce.number().nonnegative('Tarif pengiriman harus angka valid.'),
+  }).safeParse({
+    kendaraan_id: formData.get('kendaraan_id'),
+    status_pengiriman: formData.get('status_pengiriman'),
+    tarif: formData.get('tarif'),
+  });
+
+  if (!parsed.success) {
+    throw new Error(getValidationMessage(parsed.error));
+  }
+
+  const { kendaraan_id, status_pengiriman, tarif } = parsed.data;
+  const operatorName = await getOperatorName();
+
+  try {
+    await sql.begin(async (trx) => {
+      const previousRows = await trx`
+        SELECT t.status_pengiriman, t.kota_tujuan, k.kode_kendaraan
+        FROM transaksi t
+        LEFT JOIN kendaraan k ON t.kendaraan_id = k.id
+        WHERE t.resi = ${resi}
+        LIMIT 1
+      `;
+
+      const previous = previousRows[0];
+      if (!previous) {
+        throw new Error('Data transaksi tidak ditemukan.');
+      }
+
+      await trx`
+        UPDATE transaksi
+        SET
+          kendaraan_id = ${kendaraan_id},
+          status_pengiriman = ${status_pengiriman},
+          tarif = ${tarif},
+          updated_at = NOW()
+        WHERE resi = ${resi}
+      `;
+
+      await insertTrackingLog(trx, {
+        resi,
+        previousStatus: previous.status_pengiriman,
+        newStatus: status_pengiriman,
+        operatorName,
+        keterangan: `Status cargo diperbarui menuju ${status_pengiriman} untuk tujuan ${previous.kota_tujuan}.`,
+      });
+    });
+  } catch (error) {
+    console.error('Update Error:', error);
+    throw new Error('Gagal memperbarui data transaksi cargo.');
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/dashboard/manifest');
+  revalidatePath('/dashboard/tracking');
+  revalidatePath('/dashboard/logs');
+  redirect('/dashboard/manifest');
+}
 
 export async function deleteTransaction(resi: string) {
   try {
     console.log(`[DEBUG] Mencoba menghapus kargo dengan resi: ${resi}`);
-
-    // 1. Hapus terlebih dahulu dari tabel manifest berdasarkan transaksi_resi
-    await sql`
-      DELETE FROM manifest WHERE transaksi_resi = ${resi}
-    `;
-
-    // 2. Hapus dari tabel transaksi utama
     const result = await sql`
       DELETE FROM transaksi WHERE resi = ${resi}
     `;
@@ -170,6 +346,8 @@ export async function deleteTransaction(resi: string) {
     // Amankan pembaruan cache Next.js
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/manifest');
+    revalidatePath('/dashboard/tracking');
+    revalidatePath('/dashboard/logs');
     
     return { success: true };
   } catch (error: any) {
@@ -181,4 +359,95 @@ export async function deleteTransaction(resi: string) {
     // MELEMPAR ERROR ASLI KE BROWSER AGAR TIDAK MUNCUL "Gagal menghapus data kargo" SAJA
     throw new Error(`Detail Error: ${error.message || error}`);
   }
+}
+
+export async function createKendaraan(formData: FormData) {
+  const parsed = kendaraanSchema.safeParse({
+    nama_kendaraan: formData.get('nama_kendaraan'),
+    jenis_kendaraan: formData.get('jenis_kendaraan'),
+    kode_kendaraan: formData.get('kode_kendaraan'),
+    kapasitas_muatan: formData.get('kapasitas_muatan'),
+    status_kendaraan: formData.get('status_kendaraan'),
+  });
+
+  if (!parsed.success) {
+    throw new Error(getValidationMessage(parsed.error));
+  }
+
+  const kendaraanId = await generateKendaraanId();
+  const { nama_kendaraan, jenis_kendaraan, kode_kendaraan, kapasitas_muatan, status_kendaraan } = parsed.data;
+
+  await sql`
+    INSERT INTO kendaraan (
+      id,
+      nama_kendaraan,
+      jenis_kendaraan,
+      kode_kendaraan,
+      kapasitas_muatan,
+      status_kendaraan,
+      created_at,
+      updated_at
+    ) VALUES (
+      ${kendaraanId},
+      ${nama_kendaraan},
+      ${jenis_kendaraan},
+      ${kode_kendaraan},
+      ${kapasitas_muatan},
+      ${status_kendaraan},
+      NOW(),
+      NOW()
+    )
+  `;
+
+  revalidatePath('/dashboard/kendaraan');
+  revalidatePath('/dashboard/manifest/create');
+  redirect('/dashboard/kendaraan');
+}
+
+export async function updateKendaraan(id: string, formData: FormData) {
+  const parsed = kendaraanSchema.safeParse({
+    nama_kendaraan: formData.get('nama_kendaraan'),
+    jenis_kendaraan: formData.get('jenis_kendaraan'),
+    kode_kendaraan: formData.get('kode_kendaraan'),
+    kapasitas_muatan: formData.get('kapasitas_muatan'),
+    status_kendaraan: formData.get('status_kendaraan'),
+  });
+
+  if (!parsed.success) {
+    throw new Error(getValidationMessage(parsed.error));
+  }
+
+  const { nama_kendaraan, jenis_kendaraan, kode_kendaraan, kapasitas_muatan, status_kendaraan } = parsed.data;
+
+  await sql`
+    UPDATE kendaraan
+    SET
+      nama_kendaraan = ${nama_kendaraan},
+      jenis_kendaraan = ${jenis_kendaraan},
+      kode_kendaraan = ${kode_kendaraan},
+      kapasitas_muatan = ${kapasitas_muatan},
+      status_kendaraan = ${status_kendaraan},
+      updated_at = NOW()
+    WHERE id = ${id}
+  `;
+
+  revalidatePath('/dashboard/kendaraan');
+  revalidatePath('/dashboard/manifest/create');
+  revalidatePath('/dashboard/manifest');
+  redirect('/dashboard/kendaraan');
+}
+
+export async function deleteKendaraan(id: string) {
+  try {
+    await sql`
+      DELETE FROM kendaraan
+      WHERE id = ${id}
+    `;
+  } catch (error) {
+    console.error('Delete Kendaraan Error:', error);
+    throw new Error('Gagal menghapus kendaraan dari database.');
+  }
+
+  revalidatePath('/dashboard/kendaraan');
+  revalidatePath('/dashboard/manifest/create');
 }
