@@ -1,123 +1,252 @@
-import { createTransaksi } from '@/app/lib/actions';
-import postgres from 'postgres';
 import Link from 'next/link';
+import postgres from 'postgres';
+import Topbar from '@/app/ui/dashboard/topbar';
+import { createTransaksi } from '@/app/lib/actions';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
-export default async function Page() {
-  // Menarik data kendaraan langsung dari database untuk opsi Dropdown
-  const kendaraanList = await sql`SELECT id, nama_kendaraan, kode_kendaraan FROM kendaraan`;
+export const dynamic = 'force-dynamic';
+
+export default async function CreateManifestPage() {
+  let kendaraanList: any[] = [];
+  let databaseError = '';
+
+  try {
+    kendaraanList = await sql`
+      SELECT *
+      FROM kendaraan
+      ORDER BY
+        CASE
+          WHEN status_kendaraan IN ('Aktif', 'Tersedia') THEN 0
+          WHEN status_kendaraan = 'Maintenance' THEN 1
+          ELSE 2
+        END,
+        id ASC
+    `;
+  } catch (error: any) {
+    console.error('Gagal memuat form create manifest:', error);
+    databaseError = error?.code === 'ECONNREFUSED'
+      ? 'Koneksi database belum aktif, jadi daftar kendaraan belum bisa dimuat.'
+      : 'Form belum bisa mengambil data kendaraan dari database.';
+  }
+
+  const tanggalHariIni = new Date().toISOString().split('T')[0];
 
   return (
-    <main className="max-w-4xl mx-auto p-6 text-black">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-black">Tambah Data Pengiriman Kargo</h1>
-        <p className="text-gray-800">Form input transaksi baru Ekspedisi Petir (Skybolt)</p>
+    <>
+      <Topbar title="Tambah Manifest Kargo" />
+
+      <div className="p-6 text-black max-w-4xl mx-auto">
+        <h1 className="text-lg font-bold text-[#0d1a4a] mb-1">Tambah Pengiriman Kargo</h1>
+        <p className="text-xs text-gray-500 mb-6">
+          Isi seluruh data cargo sesuai requirement UGD. Nomor AWB akan dibuat otomatis saat data disimpan.
+        </p>
+
+        {databaseError ? (
+          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[12px] text-red-600">
+            {databaseError}
+          </div>
+        ) : null}
+
+        <form action={createTransaksi} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-bold text-gray-400 uppercase">No AWB / Resi</label>
+            <input
+              type="text"
+              value="Auto Generated Setelah Submit"
+              disabled
+              className="border rounded-md p-2 bg-gray-100 font-mono text-gray-500 cursor-not-allowed text-sm"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Tanggal Kirim</label>
+              <input
+                name="tanggal_kirim"
+                type="date"
+                defaultValue={tanggalHariIni}
+                required
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">No Telepon</label>
+              <input
+                name="no_telepon"
+                type="tel"
+                required
+                inputMode="numeric"
+                minLength={12}
+                maxLength={12}
+                pattern="^[0-9]{12}$"
+                title="Nomor telepon harus terdiri dari tepat 12 angka."
+                placeholder="081234567890"
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Nama Pengirim</label>
+              <input
+                name="nama_pengirim"
+                type="text"
+                required
+                minLength={2}
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Nama Penerima</label>
+              <input
+                name="nama_penerima"
+                type="text"
+                required
+                minLength={2}
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Kota Asal</label>
+              <input
+                name="kota_asal"
+                type="text"
+                required
+                minLength={2}
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Kota Tujuan</label>
+              <input
+                name="kota_tujuan"
+                type="text"
+                required
+                minLength={2}
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Jenis Barang</label>
+              <input
+                name="jenis_barang"
+                type="text"
+                required
+                minLength={2}
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Jenis Pengiriman</label>
+              <select
+                name="jenis_pengiriman"
+                defaultValue="Biasa"
+                required
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="Biasa">Biasa</option>
+                <option value="Cepat">Cepat</option>
+                <option value="Vvip">Vvip</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Berat Barang (Kg)</label>
+              <input
+                name="berat_barang"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Harga / Tarif Pengiriman (Rp)</label>
+              <input
+                name="tarif"
+                type="number"
+                min="0"
+                required
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Pilih Kendaraan</label>
+              <select
+                name="kendaraan_id"
+                required
+                defaultValue=""
+                disabled={kendaraanList.length === 0}
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="" disabled>-- Pilih Kendaraan --</option>
+                {kendaraanList.map((kendaraan) => (
+                  <option key={kendaraan.id} value={kendaraan.id}>
+                    {kendaraan.nama_kendaraan} ({kendaraan.kode_kendaraan}) - {kendaraan.jenis_kendaraan} [{kendaraan.status_kendaraan}]
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700">Status Pengiriman</label>
+              <select
+                name="status_pengiriman"
+                defaultValue="Pending"
+                required
+                className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="Pending">Pending</option>
+                <option value="Diproses">Diproses</option>
+                <option value="Dalam Pengiriman">Dalam Pengiriman</option>
+                <option value="Sampai Tujuan">Sampai Tujuan</option>
+                <option value="Selesai">Selesai</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-semibold text-gray-700">Deskripsi / Catatan Barang</label>
+            <textarea
+              name="catatan"
+              rows={4}
+              required
+              minLength={5}
+              placeholder="Contoh: barang pecah belah, jangan tertindih, prioritas cepat, dll."
+              className="border rounded-md p-3 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 mt-4 border-t pt-4">
+            <Link
+              href="/dashboard/manifest"
+              className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100 text-xs font-semibold transition"
+            >
+              BATAL
+            </Link>
+            <button
+              type="submit"
+              disabled={kendaraanList.length === 0}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold shadow-sm transition"
+            >
+              SIMPAN DATA
+            </button>
+          </div>
+        </form>
       </div>
-
-      <form action={createTransaksi} className="bg-white p-6 rounded-xl shadow-sm border border-gray-300">
-        {/* Menggunakan CSS Grid agar form berjejer rapi 2 kolom */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">Tanggal Kirim</label>
-            <input type="date" name="tanggal_kirim" required className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">Nama Pengirim</label>
-            <input type="text" name="nama_pengirim" placeholder="PT Solusi Maju" required className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black placeholder:text-gray-500" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">Nama Penerima</label>
-            <input type="text" name="nama_penerima" placeholder="Budi Santoso" required className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black placeholder:text-gray-500" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">No Telepon Penerima</label>
-            <input type="text" name="no_telepon" placeholder="081234..." required className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black placeholder:text-gray-500" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">Kota Asal</label>
-            <input type="text" name="kota_asal" placeholder="Jakarta" required className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black placeholder:text-gray-500" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">Kota Tujuan</label>
-            <input type="text" name="kota_tujuan" placeholder="Surabaya" required className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black placeholder:text-gray-500" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">Jenis Barang</label>
-            <input type="text" name="jenis_barang" placeholder="Elektronik, Garmen, dll" required className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black placeholder:text-gray-500" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">Berat Barang (Kg)</label>
-            <input type="number" step="0.1" name="berat_barang" placeholder="50.5" required className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black placeholder:text-gray-500" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">Tarif / Harga (Rp)</label>
-            <input type="number" name="tarif" placeholder="150000" required className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black placeholder:text-gray-500" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">Jenis Pengiriman</label>
-            <select name="jenis_pengiriman" required className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black">
-              <option value="Biasa">Biasa</option>
-              <option value="Cepat">Cepat</option>
-              <option value="Vvip">VVIP</option>
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">Armada / Kendaraan</label>
-            <select name="kendaraan_id" required defaultValue="" className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black">
-              <option value="" disabled>Pilih Kendaraan...</option>
-              {kendaraanList.map((k) => (
-                <option key={k.id} value={k.id}>
-                  {k.nama_kendaraan} ({k.kode_kendaraan})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-black">Status Pengiriman</label>
-            <select name="status_pengiriman" required className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black">
-              <option value="Pending">Pending</option>
-              <option value="Diproses">Diproses</option>
-              <option value="Dalam Pengiriman">Dalam Pengiriman</option>
-              <option value="Sampai Tujuan">Sampai Tujuan</option>
-              <option value="Selesai">Selesai</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2 mt-6">
-          <label className="text-sm font-medium text-black">Catatan / Deskripsi Barang</label>
-          <textarea name="catatan" rows={3} placeholder="Fragile, jangan dibanting..." className="border border-gray-300 rounded-md p-2 bg-gray-50 text-black placeholder:text-gray-500"></textarea>
-        </div>
-
-        {/* Tombol Aksi */}
-        <div className="mt-8 flex justify-end gap-4">
-          <Link 
-            href="/dashboard/manifest" 
-            className="px-6 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-black font-medium border border-gray-400"
-          >
-            Batal
-          </Link>
-          <button 
-            type="submit" 
-            className="px-6 py-2 rounded-md bg-blue-300 hover:bg-blue-400 text-black font-bold border border-blue-500"
-          >
-            Simpan Data
-          </button>
-        </div>
-      </form>
-    </main>
+    </>
   );
 }

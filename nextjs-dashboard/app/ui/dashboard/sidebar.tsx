@@ -40,6 +40,18 @@ const navOperasional = [
     ),
   },
   {
+    href: '/dashboard/kendaraan',
+    label: 'Data Kendaraan',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="1.5" y="5" width="13" height="6" rx="1.5"/>
+        <circle cx="4.5" cy="11.5" r="1"/>
+        <circle cx="11.5" cy="11.5" r="1"/>
+        <path d="M4 5V3.5h8V5"/>
+      </svg>
+    ),
+  },
+  {
     href: '/dashboard/penerbangan',
     label: 'Status Penerbangan',
     icon: (
@@ -78,8 +90,15 @@ export default function Sidebar() {
   const router    = useRouter()
   const [collapsed, setCollapsed] = useState(false)
 
-  function handleLogout() {
-    router.push('/login')
+  async function handleLogout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch (error) {
+      console.error('Logout gagal:', error)
+    } finally {
+      router.push('/login')
+      router.refresh()
+    }
   }
 
   return (

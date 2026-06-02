@@ -8,19 +8,51 @@ export default function LoginPage() {
   const router = useRouter();
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  function doLogin() {
-    if (user === "Admin" && pass === "Admin123") {
-      setError(false);
+  async function doLogin() {
+    if (!user.trim() || !pass.trim()) {
+      setError("Username/email dan password wajib diisi.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: user,
+          password: pass,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        setError(result.error || "Login gagal. Silakan periksa akun Anda.");
+        return;
+      }
+
       setSuccess(true);
+      const nextPath =
+        (typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("next")
+          : null) ||
+        result.redirectTo ||
+        "/dashboard";
 
       setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
-    } else {
-      setError(true);
+        router.push(nextPath);
+        router.refresh();
+      }, 1200);
+    } catch (error) {
+      setError("Login gagal diproses. Pastikan koneksi dan database aktif.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -64,16 +96,16 @@ export default function LoginPage() {
         {/* FORM */}
         <div className="text-left px-6">
           <label className="block text-sm font-semibold mb-1 text-black">
-            Username
+            Email / Username
           </label>
           <input
             type="text"
-            placeholder="Masukkan username"
+            placeholder="Masukkan email atau username"
             className="w-full border border-black px-3 py-2 mb-4 bg-white text-black"
             value={user}
             onChange={(e) => {
               setUser(e.target.value);
-              setError(false); 
+              setError(""); 
             }}
             onKeyDown={(e) => e.key === "Enter" && doLogin()}
           />
@@ -88,7 +120,7 @@ export default function LoginPage() {
             value={pass}
             onChange={(e) => {
               setPass(e.target.value);
-              setError(false);
+              setError("");
             }}
             onKeyDown={(e) => e.key === "Enter" && doLogin()}
           />
@@ -96,7 +128,7 @@ export default function LoginPage() {
           {/* ERROR */}
           {error && (
             <p className="text-red-600 text-sm mt-2 italic">
-              Username atau Password salah
+              {error}
             </p>
           )}
         </div>
@@ -104,9 +136,10 @@ export default function LoginPage() {
         {/* BUTTON */}
         <button
           onClick={doLogin}
-          className="bg-[#fdc00b] px-8 py-2 rounded-[10px] font-semibold mt-6 mb-2 text-black"
+          disabled={loading}
+          className="bg-[#fdc00b] px-8 py-2 rounded-[10px] font-semibold mt-6 mb-2 text-black disabled:opacity-60"
         >
-          LOG IN
+          {loading ? "MEMPROSES..." : "LOG IN"}
         </button>
 
         {/* FORGOT */}

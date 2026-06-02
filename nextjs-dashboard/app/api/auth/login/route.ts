@@ -1,36 +1,74 @@
-
+import bcrypt from 'bcrypt';
 import postgres from 'postgres';
-import { SESSION_COOKIE_NAME, readSessionValue } from '@/app/lib/auth';
+import { createSessionValue, SESSION_COOKIE_NAME } from '@/app/lib/auth';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 export async function POST(request: Request) {
   try {
-    const cookieHeader = request.headers.get('cookie') || '';
-    const sessionMatch = cookieHeader
-      .split(';')
-      .map((entry) => entry.trim())
-      .find((entry) => entry.startsWith(`${SESSION_COOKIE_NAME}=`));
+    const body = await request.json();
+    const identifier = String(body.identifier || '').trim();
+    const password = String(body.password || '').trim();
 
-    const sessionValue = sessionMatch?.split('=').slice(1).join('=');
-    const session = readSessionValue(sessionValue);
-
-    if (session?.userId) {
-      await sql`
-        UPDATE users
-        SET status_sesi = 'Nonaktif', updated_at = NOW()
-        WHERE id = ${session.userId}
-      `;
+    if (!identifier || !password) {
+      return Response.json(
+        { error: 'Username/email dan password wajib diisi.' },
+        { status: 400 },
+      );
     }
-  } catch (error) {
-    console.error('Logout Error:', error);
-  }
 
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Set-Cookie': `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`,
-    },
-  });
+    const users = await sql`
+      SELECT id, username, email, password_hash, role, status_sesi
+      FROM users
+      WHERE username = ${identifier} OR email = ${identifier}
+      LIMIT 1
+    `;
+
+    const user = users[0];
+    if (!user) {
+      return Response.json(
+        { error: 'Email/username atau password salah.' },
+        { status: 401 },
+      );
+    }
+
+    const isValid = await bcrypt.compare(password, user.password_hash);
+    if (!isValid) {
+      return Response.json(
+        { error: 'Email/username atau password salah.' },
+        { status: 401 },
+      );
+    }
+
+    await sql`
+      UPDATE users
+      SET status_sesi = 'Aktif', updated_at = NOW()
+      WHERE id = ${user.id}
+    `;
+
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 8).toISOString();
+    const sessionValue = createSessionValue({
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+      expiresAt,
+    });
+
+    return new Response(
+      JSON.stringify({ success: true, redirectTo: '/dashboard' }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Set-Cookie': `${SESSION_COOKIE_NAME}=${sessionValue}; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800`,
+        },
+      },
+    );
+  } catch (error) {
+    console.error('Login Error:', error);
+    return Response.json(
+      { error: 'Login gagal diproses. Pastikan database dan akun aktif.' },
+      { status: 500 },
+    );
+  }
 }

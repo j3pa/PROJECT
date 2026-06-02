@@ -10,29 +10,28 @@ export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   let transactions: any[] = [];
+  let kendaraanAktif = 0;
 
   try {
-    // KEMUNGKINAN 1: Mencoba JOIN standard menggunakan tabel manifest sebagai jembatan
     transactions = await sql`
       SELECT 
         t.*, 
-        p.kode_penerbangan,
         k.nama_kendaraan,
-        k.kode_kendaraan,
-        b_asal.kota AS kota_asal,
-        b_tujuan.kota AS kota_tujuan
+        k.kode_kendaraan
       FROM transaksi t
-      LEFT JOIN manifest m ON (t.id = m.transaksi_id OR t.resi = m.transaksi_resi)
-      LEFT JOIN penerbangan p ON m.penerbangan_id = p.id
-      LEFT JOIN kendaraan k ON p.kendaraan_id = k.id
-      LEFT JOIN bandara b_asal ON p.bandara_asal_id = b_asal.id
-      LEFT JOIN bandara b_tujuan ON p.bandara_tujuan_id = b_tujuan.id
+      LEFT JOIN kendaraan k ON t.kendaraan_id = k.id
       ORDER BY t.tanggal_kirim DESC
     `;
+
+    const totalKendaraanAktif = await sql`
+      SELECT COUNT(*) AS count
+      FROM kendaraan
+      WHERE status_kendaraan IN ('Aktif', 'Tersedia')
+    `;
+
+    kendaraanAktif = Number(totalKendaraanAktif[0]?.count || 0);
   } catch (error) {
     try {
-      // KEMUNGKINAN 2 (FALLBACK): Jika tabel manifest ternyata tidak punya kaitan langsung,
-      // kita coba tarik data transaksi murni terlebih dahulu agar halaman tidak crash/blank screen
       transactions = await sql`
         SELECT * FROM transaksi ORDER BY tanggal_kirim DESC
       `;
@@ -45,7 +44,13 @@ export default async function DashboardPage() {
   // Hitung statistik secara dinamis dari data transaksi yang berhasil ditarik
   const totalKargo = transactions.length;
   const totalSelesai = transactions.filter(t => t.status_pengiriman === 'Selesai' || t.status === 'Selesai' || t.status_pengiriman === 'Sampai Tujuan').length;
-  const totalProses = transactions.filter(t => t.status_pengiriman === 'Diproses' || t.status_pengiriman === 'Dalam Pengiriman' || t.status === 'Sortation' || t.status === 'Loaded').length;
+  const totalProses = transactions.filter(t => t.status_pengiriman === 'Diproses' || t.status_pengiriman === 'Dalam Pengiriman' || t.status_pengiriman === 'Pending' || t.status === 'Sortation' || t.status === 'Loaded').length;
+  const tanggalHariIni = new Intl.DateTimeFormat('id-ID', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date());
 
   return (
     <>
@@ -55,7 +60,7 @@ export default async function DashboardPage() {
         {/* Heading */}
         <div className="mb-5">
           <h1 className="text-[18px] font-bold text-[#0d1a4a]">Dashboard Operator</h1>
-          <p className="text-[11px] text-gray-500 mt-0.5">Senin, 06 April 2026 · Shift Pagi</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">{tanggalHariIni} · Shift Pagi</p>
         </div>
 
         {/* Statistik */}
@@ -83,14 +88,14 @@ export default async function DashboardPage() {
           />
           <StatCard
             label="Penerbangan Aktif"
-            value="5"
+            value={kendaraanAktif.toString()}
             sub="Armada udara siap"
             valueColor="text-blue-800"
           />
         </div>
 
         {/* Komponen Tabel Utama */}
-        <CargoTable transactions={transactions} />
+        <CargoTable transactions={transactions} actionMode="detail" />
       </div>
     </>
   );

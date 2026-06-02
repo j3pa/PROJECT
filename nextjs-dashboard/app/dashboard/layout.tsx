@@ -1,7 +1,15 @@
-import Sidebar   from '@/app/ui/dashboard/sidebar'
-import StatusBar from '@/app/ui/dashboard/status-bar'
+import { redirect } from 'next/navigation';
+import Sidebar from '@/app/ui/dashboard/sidebar';
+import StatusBar from '@/app/ui/dashboard/status-bar';
+import { getServerSession } from '@/app/lib/auth';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const session = await getServerSession();
+
+  if (!session) {
+    redirect('/auth/notauthorized');
+  }
+
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       {/* Fixed sidebar */}
@@ -18,5 +26,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <StatusBar />
       </div>
     </div>
-  )
+  );
 }
