@@ -172,6 +172,7 @@ function ModalOperator({
 
 export default function TrackingPage() {
   const [input, setInput] = useState('')
+  const [searchedAwb, setSearchedAwb] = useState('')
   const [result, setResult] = useState<TrackingData | null | 'not-found'>(null)
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -181,6 +182,7 @@ export default function TrackingPage() {
     if (!key) return
     
     setLoading(true)
+    setSearchedAwb(key)
     try {
       const data = await getTrackingData(key) // Memanggil Server Action Neon
       if (data) {
@@ -201,6 +203,7 @@ export default function TrackingPage() {
 
   function handleCariLagi() {
     setInput('')
+    setSearchedAwb('')
     setResult(null)
   }
 
@@ -208,12 +211,12 @@ export default function TrackingPage() {
     <>
       <Topbar title="Tracking AWB" />
 
-      <div className="p-6 max-w-3xl">
+      <div className="p-6 w-full">
         <h1 className="text-[18px] font-bold text-[#0d1a4a] mb-1">Tracking Airway Bill</h1>
         <p className="text-[11px] text-gray-500 mb-5">Lacak status pengiriman kargo berdasarkan nomor AWB</p>
 
         {/* Form input */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-5">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-5 w-full">
           <label className="block text-[12px] font-semibold text-gray-700 mb-2">Nomor Airway Bill (AWB)</label>
           <div className="flex gap-2 mb-3">
             <input
@@ -235,14 +238,14 @@ export default function TrackingPage() {
 
           {result === 'not-found' && (
             <p className="text-[11.5px] font-mono text-gray-500 mb-1">
-              No AWB <span className="text-red-500 font-semibold">{input}</span> tidak ditemukan
+              No AWB <span className="text-red-500 font-semibold">{searchedAwb}</span> tidak ditemukan
             </p>
           )}
         </div>
 
         {/* Jika belum melakukan pencarian */}
         {result === null && !loading && (
-          <div className="bg-white border border-gray-200 rounded-xl p-16 flex flex-col items-center justify-center">
+          <div className="bg-white border border-gray-200 rounded-xl p-16 flex flex-col items-center justify-center w-full">
             <p className="text-[16px] font-semibold text-gray-600 mb-1">Belum ada data tracking</p>
             <p className="text-[13px] text-gray-400">Masukkan nomor AWB aktif dari database</p>
           </div>
@@ -250,20 +253,34 @@ export default function TrackingPage() {
 
         {/* Loading Spinner */}
         {loading && (
-          <div className="bg-white border border-gray-200 rounded-xl p-16 flex items-center justify-center text-gray-500 text-[13px]">
+          <div className="bg-white border border-gray-200 rounded-xl p-16 flex items-center justify-center text-gray-500 text-[13px] w-full">
             Sedang mencari data dari database Neon...
           </div>
         )}
 
         {/* AWB ga ditemukan */}
         {result === 'not-found' && !loading && (
-          <div className="bg-white border border-red-100 rounded-xl p-12 flex flex-col items-center justify-center">
-            <p className="text-[16px] font-bold text-gray-800 mb-2">AWB Tidak Ditemukan</p>
-            <p className="text-[13px] text-gray-500 text-center mb-7">
-              Nomor <span className="font-mono font-semibold text-red-500">{input}</span> tidak ada di sistem.
+          <div className="bg-white border border-gray-200 rounded-xl min-h-[360px] px-6 py-14 flex flex-col items-center justify-center text-center w-full">
+            <div className="w-11 h-11 rounded-full border border-red-100 bg-red-50 flex items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M9 10h.01"/>
+                <path d="M15 10h.01"/>
+                <path d="M9 16c.8-.9 1.8-1.3 3-1.3s2.2.4 3 1.3"/>
+              </svg>
+            </div>
+
+            <p className="text-[13px] font-bold text-red-500 mb-1">404</p>
+            <h2 className="text-[18px] font-bold text-[#0d1a4a] mb-2">AWB Not Found</h2>
+            <p className="max-w-sm text-[13px] leading-6 text-gray-500 mb-1">
+              Nomor AWB yang dicari tidak terdeteksi atau belum tersedia di database.
             </p>
-            <div className="flex gap-3">
-              <button onClick={handleCariLagi} className="text-[13px] font-semibold px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 transition">Cari Lagi</button>
+            <p className="font-mono text-[12px] font-semibold text-gray-700 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 mb-7">
+              {searchedAwb}
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button onClick={handleCariLagi} className="text-[13px] font-semibold px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 transition">Go Back</button>
               <button onClick={() => setShowModal(true)} className="text-[13px] font-semibold px-5 py-2.5 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition">Hubungi Operator</button>
             </div>
           </div>
@@ -271,7 +288,7 @@ export default function TrackingPage() {
 
         {/* Hasil tracking kargo real-time berhasil */}
         {result && result !== 'not-found' && !loading && (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden w-full">
             <div className="bg-[#0d1a4a] px-6 py-4 flex items-start justify-between">
               <div>
                 <p className="font-mono text-white text-[15px] font-bold">AWB {result.awb}</p>
@@ -320,7 +337,7 @@ export default function TrackingPage() {
       </div>
 
       {showModal && (
-        <ModalOperator awb={input} onClose={() => setShowModal(false)} />
+        <ModalOperator awb={searchedAwb || input} onClose={() => setShowModal(false)} />
       )}
     </>
   )
