@@ -14,7 +14,7 @@ export default function LoginPage() {
 
   async function doLogin() {
     if (!user.trim() || !pass.trim()) {
-      setError("Username/email dan password wajib diisi.");
+      setError("Username dan password wajib diisi.");
       return;
     }
 
@@ -96,11 +96,11 @@ export default function LoginPage() {
         {/* FORM */}
         <div className="text-left px-6">
           <label className="block text-sm font-semibold mb-1 text-black">
-            Email / Username
+            Username
           </label>
           <input
             type="text"
-            placeholder="Masukkan email atau username"
+            placeholder="Masukkan username"
             className="w-full border border-black px-3 py-2 mb-4 bg-white text-black"
             value={user}
             onChange={(e) => {
