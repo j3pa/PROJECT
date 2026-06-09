@@ -1,5 +1,9 @@
 import Topbar from '@/app/ui/dashboard/topbar'
 
+export const metadata = {
+  title: 'Penerbangan',
+};
+
 interface Flight {
   nomor: string
   rute: string

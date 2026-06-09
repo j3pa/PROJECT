@@ -1,6 +1,10 @@
 
 import Link from 'next/link';
 
+export const metadata = {
+  title: 'Akses Ditolak',
+};
+
 export default async function NotAuthorizedPage({
   searchParams,
 }: {

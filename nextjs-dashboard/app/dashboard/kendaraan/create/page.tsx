@@ -2,6 +2,10 @@ import Link from 'next/link';
 import Topbar from '@/app/ui/dashboard/topbar';
 import { createKendaraan } from '@/app/lib/actions';
 
+export const metadata = {
+  title: 'Tambah Kendaraan',
+};
+
 export const dynamic = 'force-dynamic';
 
 export default function CreateKendaraanPage() {

@@ -2,6 +2,11 @@ import postgres from 'postgres';
 import Topbar from '@/app/ui/dashboard/topbar';
 import StatCard from '@/app/ui/dashboard/stat-card';
 import CargoTable from '@/app/ui/dashboard/cargo-table';
+import MonthlyBookingChart from '@/app/ui/dashboard/monthly-booking-chart';
+
+export const metadata = {
+  title: 'Dashboard Operator',
+};
 
 // Inisialisasi koneksi database Neon
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
@@ -93,6 +98,8 @@ export default async function DashboardPage() {
             valueColor="text-blue-800"
           />
         </div>
+
+        <MonthlyBookingChart transactions={transactions} />
 
         {/* Komponen Tabel Utama */}
         <CargoTable transactions={transactions} actionMode="detail" />

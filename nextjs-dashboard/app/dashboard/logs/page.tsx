@@ -4,6 +4,10 @@ import Link from 'next/link';
 import Topbar from '@/app/ui/dashboard/topbar';
 import { fetchActivityLogs } from '@/app/lib/activity-logs';
 
+export const metadata = {
+  title: 'Log Aktivitas',
+};
+
 export const dynamic = 'force-dynamic';
 export default async function LogsPage() {
   const { logs, databaseError, isFallback } = await fetchActivityLogs();

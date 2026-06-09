@@ -1,5 +1,9 @@
 import { FaYoutube, FaInstagram, FaTwitter } from 'react-icons/fa';
 
+export const metadata = {
+  title: 'Beranda',
+};
+
 export default function Home() {
   return (
     <main className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden text-white">

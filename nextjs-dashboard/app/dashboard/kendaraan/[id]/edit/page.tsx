@@ -3,6 +3,10 @@ import postgres from 'postgres';
 import Topbar from '@/app/ui/dashboard/topbar';
 import { updateKendaraan } from '@/app/lib/actions';
 
+export const metadata = {
+  title: 'Edit Kendaraan',
+};
+
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 export const dynamic = 'force-dynamic';

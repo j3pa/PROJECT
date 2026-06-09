@@ -1,5 +1,9 @@
 import { Clock, Bell, ShieldCheck, Plane } from 'lucide-react';
 
+export const metadata = {
+  title: 'Tentang Kami',
+};
+
 export default function AboutPage() {
   const features = [
     {

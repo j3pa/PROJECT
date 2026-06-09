@@ -3,6 +3,10 @@ import postgres from 'postgres';
 import Topbar from '@/app/ui/dashboard/topbar';
 import CargoTable from '@/app/ui/dashboard/cargo-table';
 
+export const metadata = {
+  title: 'Manifest Cargo',
+};
+
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 export const dynamic = 'force-dynamic';

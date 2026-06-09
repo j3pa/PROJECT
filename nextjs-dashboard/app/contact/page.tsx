@@ -1,5 +1,9 @@
 import { Phone, MessageCircle, Mail, MapPin } from 'lucide-react'; // Menambahkan MapPin untuk icon alamat
 
+export const metadata = {
+  title: 'Kontak',
+};
+
 export default function ContactPage() {
   return (
     <main className="pt-32 pb-20 px-10 min-h-screen bg-[#07192e]">

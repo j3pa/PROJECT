@@ -3,6 +3,10 @@ import Link from 'next/link';
 import postgres from 'postgres';
 import Topbar from '@/app/ui/dashboard/topbar';
 
+export const metadata = {
+  title: 'Detail Manifest',
+};
+
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 export const dynamic = 'force-dynamic';

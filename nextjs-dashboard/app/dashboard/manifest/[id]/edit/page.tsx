@@ -3,6 +3,10 @@ import Link from 'next/link';
 import Topbar from '@/app/ui/dashboard/topbar';
 import { updateTransaksi } from '@/app/lib/actions';
 
+export const metadata = {
+  title: 'Edit Manifest',
+};
+
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 // Di Next.js terbaru, params bertipe Promise

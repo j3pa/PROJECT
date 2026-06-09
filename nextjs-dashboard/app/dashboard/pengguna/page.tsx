@@ -3,6 +3,10 @@ import postgres from 'postgres';
 import Topbar from '@/app/ui/dashboard/topbar';
 import { getServerSession } from '@/app/lib/auth';
 
+export const metadata = {
+  title: 'Pengguna',
+};
+
 export const dynamic = 'force-dynamic';
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
