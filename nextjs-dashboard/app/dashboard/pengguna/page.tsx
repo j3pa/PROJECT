@@ -1,16 +1,17 @@
-import Link from 'next/link';
 import postgres from 'postgres';
 import Topbar from '@/app/ui/dashboard/topbar';
 import { getServerSession } from '@/app/lib/auth';
+import LoginDuration from '@/app/ui/dashboard/login-duration';
 
 export const metadata = {
-  title: 'Pengguna',
+  title: 'Profil',
 };
 
 export const dynamic = 'force-dynamic';
+
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
-function formatLoginDate(dateValue?: string | Date) {
+function formatLoginDate(dateValue?: string | Date | null) {
   const safeDate = dateValue ? new Date(dateValue) : new Date();
   return new Intl.DateTimeFormat('id-ID', {
     day: '2-digit',
@@ -21,21 +22,28 @@ function formatLoginDate(dateValue?: string | Date) {
   }).format(safeDate);
 }
 
+function toIsoString(dateValue?: string | Date | null) {
+  if (!dateValue) return new Date().toISOString();
+  const date = new Date(dateValue);
+  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+}
+
 export default async function PenggunaPage() {
   const session = await getServerSession();
 
   let userProfile = {
-    username: 'Andika',
+    username: session?.username || 'Andika',
     email: 'andika123@gmail.com',
-    role: 'Supervisor',
+    role: session?.role || 'Supervisor',
     status_sesi: 'Aktif',
+    last_login: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
 
   if (session?.userId) {
     try {
       const userRows = await sql`
-        SELECT username, email, role, status_sesi, updated_at
+        SELECT username, email, role, status_sesi, last_login, updated_at
         FROM users
         WHERE id = ${session.userId}
         LIMIT 1
@@ -43,11 +51,12 @@ export default async function PenggunaPage() {
 
       if (userRows[0]) {
         userProfile = {
-          username: String(userRows[0].username),
-          email: String(userRows[0].email),
-          role: String(userRows[0].role),
-          status_sesi: String(userRows[0].status_sesi),
-          updated_at: String(userRows[0].updated_at),
+          username: userRows[0].username || userProfile.username,
+          email: userRows[0].email || userProfile.email,
+          role: userRows[0].role || userProfile.role,
+          status_sesi: userRows[0].status_sesi || userProfile.status_sesi,
+          last_login: toIsoString(userRows[0].last_login || userProfile.last_login),
+          updated_at: toIsoString(userRows[0].updated_at || userProfile.updated_at),
         };
       }
     } catch (error) {
@@ -55,144 +64,79 @@ export default async function PenggunaPage() {
     }
   }
 
-  const displayName = userProfile.username;
-  const roleLabel = userProfile.role;
-  const lastLogin = formatLoginDate(userProfile.updated_at);
-  const statusSesi = userProfile.status_sesi || 'Aktif';
-  const avatarLabel = displayName.charAt(0).toUpperCase();
+  const initials = String(userProfile.username || 'A').slice(0, 1).toUpperCase();
 
   return (
     <>
-      <Topbar title="Pengguna" />
+      <Topbar title="Profil" />
 
-      <div className="p-6 text-black">
-        <h1 className="text-[18px] font-bold text-[#0d1a4a] mb-1">Profil Pengguna</h1>
-        <p className="text-[11px] text-gray-500 mb-5">
-          Kelola informasi akun, keamanan dasar, dan preferensi sistem operator.
-        </p>
-
-        <div className="space-y-5 max-w-5xl">
-          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-            <div className="px-6 py-6 flex flex-col gap-5 md:flex-row md:items-center md:justify-between border-b border-gray-100">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center text-[28px] font-bold shadow-sm">
-                  {avatarLabel}
-                </div>
-                <div>
-                  <h2 className="text-[30px] leading-none font-bold text-[#0d1a4a]">{displayName}</h2>
-                  <p className="text-[12px] text-blue-500 mt-1">{userProfile.email}</p>
-                  <p className="text-[11px] text-gray-400 mt-1">{roleLabel} Operasional Cargo Udara</p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-[11px] font-bold">
-                  Status Sesi: {statusSesi}
-                </span>
-                <span className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold">
-                  Role: {roleLabel}
-                </span>
-              </div>
-            </div>
-
-            <div className="grid gap-6 px-6 py-6 md:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <p className="text-[12px] font-semibold text-blue-300 mb-1">Username</p>
-                <p className="text-[18px] font-bold text-[#0d1a4a]">{displayName}</p>
-              </div>
-              <div>
-                <p className="text-[12px] font-semibold text-blue-300 mb-1">Role</p>
-                <p className="text-[18px] font-bold text-[#0d1a4a]">{roleLabel}</p>
-              </div>
-              <div>
-                <p className="text-[12px] font-semibold text-blue-300 mb-1">Login Terakhir</p>
-                <p className="text-[18px] font-bold text-[#0d1a4a]">{lastLogin}</p>
-              </div>
-              <div>
-                <p className="text-[12px] font-semibold text-blue-300 mb-1">Status Sesi</p>
-                <p className="text-[18px] font-bold text-green-600">{statusSesi}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-5 lg:grid-cols-[1.3fr_0.9fr]">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-[22px] font-bold text-[#0d1a4a] mb-4">Sesi Aktif</h2>
-
-              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#0d1a4a] text-white flex items-center justify-center flex-shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17 3 17m0 0 3.75-3.75M3 17l3.75 3.75M21 7H7m14 0-3.75-3.75M21 7l-3.75 3.75" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-[22px] font-bold text-blue-700">Desktop - Ruang Kendali</p>
-                  <p className="text-[14px] text-[#0d1a4a] font-semibold mt-1">Chrome - Sesi Ini</p>
-                  <p className="text-[12px] text-gray-500 mt-2">
-                    Aktivitas operator sedang terhubung ke dashboard utama dan sinkron dengan tracking log secara real-time.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
-                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Perangkat</p>
-                  <p className="text-[13px] font-bold text-[#0d1a4a] mt-1">Windows Desktop</p>
-                </div>
-                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Lokasi</p>
-                  <p className="text-[13px] font-bold text-[#0d1a4a] mt-1">Gudang Sudirman</p>
-                </div>
-                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Keamanan</p>
-                  <p className="text-[13px] font-bold text-green-600 mt-1">Terverifikasi</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-[22px] font-bold text-[#0d1a4a] mb-4">Ringkasan Akun</h2>
-
-              <div className="space-y-3">
-                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Akses Modul</p>
-                  <p className="text-[15px] font-bold text-[#0d1a4a] mt-1">Manifest, Tracking, Log, Penerbangan</p>
-                </div>
-                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Notifikasi</p>
-                  <p className="text-[15px] font-bold text-[#0d1a4a] mt-1">Aktif untuk update status dan manifest</p>
-                </div>
-                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Preferensi</p>
-                  <p className="text-[15px] font-bold text-[#0d1a4a] mt-1">Bahasa Indonesia, zona WIB, sinkron otomatis</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-red-200 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-[22px] font-bold text-[#0d1a4a] mb-3">Keluar dari Akun</h2>
-            <p className="text-[13px] text-gray-600 max-w-3xl leading-relaxed">
-              Anda akan keluar dari sistem operator. Pastikan seluruh pembaruan manifest, log aktivitas, dan perubahan status cargo sudah selesai disimpan sebelum mengakhiri sesi ini.
-            </p>
-
-            <div className="flex flex-wrap gap-3 mt-5">
-              <Link
-                href="/dashboard"
-                className="px-4 py-2.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-[12px] font-semibold text-gray-700 transition"
-              >
-                Batal, kembali ke dashboard
-              </Link>
-              <Link
-                href="/login"
-                className="px-4 py-2.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-[12px] font-bold text-red-600 transition"
-              >
-                Ya, keluar sekarang
-              </Link>
-            </div>
-          </div>
+      <main className="min-h-[calc(100vh-86px)] bg-[#f7f9fc] p-5 text-black lg:p-8">
+        <div className="mb-7">
+          <h1 className="text-[30px] font-bold tracking-tight text-[#0d1a4a]">Profil Akun</h1>
+          <p className="mt-1 text-[14px] text-gray-500">
+            Informasi akun operator dan status sesi yang diperbarui secara real-time.
+          </p>
         </div>
-      </div>
+
+        <section className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-blue-600 text-4xl font-bold text-white shadow-lg shadow-blue-100">
+                {initials}
+              </div>
+              <h2 className="mt-5 text-2xl font-bold text-[#0d1a4a]">{userProfile.username}</h2>
+              <p className="mt-1 text-sm font-medium text-gray-500">{userProfile.email}</p>
+              <span className="mt-4 rounded-full bg-green-100 px-4 py-1.5 text-sm font-bold text-green-700">
+                {userProfile.status_sesi}
+              </span>
+            </div>
+
+            <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4">
+              <p className="text-sm font-bold text-blue-900">Durasi Login</p>
+              <p className="mt-2 text-sm leading-6 text-blue-800">
+                Aktif selama <LoginDuration since={userProfile.last_login} /> sejak login terakhir.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-5">
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h3 className="text-xl font-bold text-[#0d1a4a]">Informasi Akun</h3>
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                  <p className="text-sm font-semibold text-gray-500">Username</p>
+                  <p className="mt-2 text-lg font-bold text-[#0d1a4a]">{userProfile.username}</p>
+                </div>
+                <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                  <p className="text-sm font-semibold text-gray-500">Email</p>
+                  <p className="mt-2 break-all text-lg font-bold text-[#0d1a4a]">{userProfile.email}</p>
+                </div>
+                <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                  <p className="text-sm font-semibold text-gray-500">Role</p>
+                  <p className="mt-2 text-lg font-bold text-[#0d1a4a]">{userProfile.role}</p>
+                </div>
+                <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                  <p className="text-sm font-semibold text-gray-500">Status Sesi</p>
+                  <p className="mt-2 text-lg font-bold text-green-700">{userProfile.status_sesi}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <p className="text-sm font-semibold text-gray-500">Login Terakhir</p>
+                <p className="mt-3 text-xl font-bold text-[#0d1a4a]">{formatLoginDate(userProfile.last_login)}</p>
+                <p className="mt-2 text-sm text-gray-500">Durasi diperbarui otomatis saat halaman aktif.</p>
+              </div>
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <p className="text-sm font-semibold text-gray-500">Update Data Akun</p>
+                <p className="mt-3 text-xl font-bold text-[#0d1a4a]">{formatLoginDate(userProfile.updated_at)}</p>
+                <p className="mt-2 text-sm text-gray-500">Sinkron otomatis mengikuti data terbaru sistem.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     </>
   );
 }

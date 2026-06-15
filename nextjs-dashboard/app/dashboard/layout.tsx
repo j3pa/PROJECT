@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Sidebar from '@/app/ui/dashboard/sidebar';
 import StatusBar from '@/app/ui/dashboard/status-bar';
+import RealtimeRefresh from '@/app/ui/dashboard/realtime-refresh';
 import { getServerSession } from '@/app/lib/auth';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -11,7 +12,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="dashboard-readable flex h-screen bg-gray-100 overflow-hidden">
+      <RealtimeRefresh />
+
       {/* Fixed sidebar */}
       <Sidebar />
 

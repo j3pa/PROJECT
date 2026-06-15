@@ -1,5 +1,3 @@
-
-
 import Link from 'next/link';
 import Topbar from '@/app/ui/dashboard/topbar';
 import { fetchActivityLogs } from '@/app/lib/activity-logs';
@@ -9,6 +7,23 @@ export const metadata = {
 };
 
 export const dynamic = 'force-dynamic';
+
+function getStatusBadge(status: string) {
+  if (status.includes('Selesai') || status.includes('Sampai')) {
+    return 'border-emerald-100 bg-emerald-50 text-emerald-700';
+  }
+
+  if (status.includes('Pengiriman') || status.includes('Loaded')) {
+    return 'border-blue-100 bg-blue-50 text-blue-700';
+  }
+
+  if (status.includes('Diproses') || status.includes('Sortation') || status.includes('Pending')) {
+    return 'border-amber-100 bg-amber-50 text-amber-700';
+  }
+
+  return 'border-gray-100 bg-gray-50 text-gray-600';
+}
+
 export default async function LogsPage() {
   const { logs, databaseError, isFallback } = await fetchActivityLogs();
   const statusSelesai = logs.filter((log) => log.status === 'Selesai').length;
@@ -19,35 +34,45 @@ export default async function LogsPage() {
       <Topbar title="Tracking Log" />
 
       <div className="p-6 text-black">
-        <h1 className="text-[18px] font-bold text-[#0d1a4a] mb-1">Log Aktivitas Sistem</h1>
-        <p className="text-[11px] text-gray-500 mb-5">
-          Riwayat perubahan status cargo dan aktivitas operator dalam satu layar pemantauan.
-        </p>
+        <div className="mb-5 rounded-2xl border border-blue-100 bg-gradient-to-r from-[#0d1a4a] via-[#123176] to-[#0b74e8] px-6 py-5 text-white shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-200">Skybolt Monitoring</p>
+              <h1 className="mt-2 text-[22px] font-bold">Log Aktivitas Sistem</h1>
+              <p className="mt-1 text-[12px] text-blue-100">
+                Riwayat perubahan status cargo dan aktivitas operator dalam satu layar pemantauan.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/logs/download"
+              className="h-10 px-4 inline-flex items-center gap-2 self-start lg:self-auto rounded-xl bg-[#fdc00b] hover:bg-[#e6ad05] text-[#0d1a4a] text-[12px] font-bold shadow-sm transition"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V4.5m0 12 4.5-4.5M12 16.5l-4.5-4.5M21 19.5H3" />
+              </svg>
+              DOWNLOAD LOG
+            </Link>
+          </div>
+        </div>
 
         <div className="flex flex-col gap-4 mb-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-3">
-            <div className="px-4 py-2 rounded-full bg-white border border-gray-200 text-[12px] shadow-sm">
-              <span className="text-gray-400">Total Log</span>{' '}
-              <span className="font-bold text-[#0d1a4a]">{logs.length}</span>
+          <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-blue-100 bg-white px-5 py-4 shadow-sm">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-gray-400">Total Log</span>
+              <p className="mt-2 text-3xl font-bold text-[#0d1a4a]">{logs.length}</p>
+              <p className="mt-1 text-[12px] text-gray-500">Aktivitas tercatat</p>
             </div>
-            <div className="px-4 py-2 rounded-full bg-white border border-gray-200 text-[12px] shadow-sm">
-              <span className="text-gray-400">Selesai</span>{' '}
-              <span className="font-bold text-green-600">{statusSelesai}</span>
+            <div className="rounded-2xl border border-emerald-100 bg-white px-5 py-4 shadow-sm">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-gray-400">Selesai</span>
+              <p className="mt-2 text-3xl font-bold text-emerald-600">{statusSelesai}</p>
+              <p className="mt-1 text-[12px] text-gray-500">Cargo sukses ditutup</p>
             </div>
-            <div className="px-4 py-2 rounded-full bg-white border border-gray-200 text-[12px] shadow-sm">
-              <span className="text-gray-400">Operator Aktif</span>{' '}
-              <span className="font-bold text-blue-600">{operatorAktif}</span>
+            <div className="rounded-2xl border border-amber-100 bg-white px-5 py-4 shadow-sm">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-gray-400">Operator Aktif</span>
+              <p className="mt-2 text-3xl font-bold text-amber-600">{operatorAktif}</p>
+              <p className="mt-1 text-[12px] text-gray-500">Petugas dalam log</p>
             </div>
           </div>
-          <Link
-            href="/dashboard/logs/download"
-            className="h-10 px-4 inline-flex items-center gap-2 self-start lg:self-auto rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm transition"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V4.5m0 12 4.5-4.5M12 16.5l-4.5-4.5M21 19.5H3" />
-            </svg>
-            DOWNLOAD LOG
-          </Link>
         </div>
 
         {databaseError ? (
@@ -56,8 +81,8 @@ export default async function LogsPage() {
           </div>
         ) : null}
 
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+          <div className="px-6 py-5 border-b border-gray-100 bg-[#f8fbff] flex items-center justify-between">
             <div>
               <h2 className="text-[14px] font-bold text-[#0d1a4a]">Tracking Log Operator</h2>
               <p className="text-[11px] text-gray-400 mt-1">Disesuaikan dengan manifest aktif dan ritme operasional gudang</p>
@@ -67,7 +92,7 @@ export default async function LogsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-[12px] text-left border-collapse min-w-[860px]">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/70">
+                <tr className="border-b border-gray-100 bg-[#f8fbff]">
                   <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Waktu</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">No AWB</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Perubahan Status</th>
@@ -84,10 +109,19 @@ export default async function LogsPage() {
                   </tr>
                 ) : (
                   logs.map((log, index) => (
-                    <tr key={`${log.awb}-${index}`} className="hover:bg-blue-50/20 transition">
-                      <td className="px-6 py-4 font-mono text-gray-500 whitespace-nowrap">{log.waktu}</td>
+                    <tr key={`${log.awb}-${index}`} className="hover:bg-blue-50/40 transition">
+                      <td className="px-6 py-4 font-mono text-gray-500 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <span className="h-9 w-1.5 rounded-full bg-[#fdc00b]" />
+                          {log.waktu}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 font-mono text-blue-600 font-semibold whitespace-nowrap">{log.awb}</td>
-                      <td className="px-6 py-4 text-[#0d1a4a] font-semibold whitespace-nowrap">{log.perubahanStatus}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-bold ${getStatusBadge(log.perubahanStatus)}`}>
+                          {log.perubahanStatus}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-blue-700 font-medium whitespace-nowrap">{log.operator}</td>
                       <td className="px-6 py-4 text-gray-500">{log.keterangan}</td>
                     </tr>

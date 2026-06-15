@@ -42,7 +42,7 @@ export default async function CreateManifestPage() {
       <div className="p-6 text-black max-w-4xl mx-auto">
         <h1 className="text-lg font-bold text-[#0d1a4a] mb-1">Tambah Pengiriman Kargo</h1>
         <p className="text-xs text-gray-500 mb-6">
-          Isi seluruh data cargo sesuai requirement UGD. Nomor AWB akan dibuat otomatis saat data disimpan.
+          Isi seluruh data cargo yang sesuai. Nomor AWB akan dibuat otomatis saat data disimpan.
         </p>
 
         {databaseError ? (

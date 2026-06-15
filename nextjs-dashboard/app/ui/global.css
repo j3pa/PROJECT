@@ -20,3 +20,61 @@ body {
   }
 }
 
+@keyframes accountMenu {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+html {
+  font-size: 16px;
+}
+
+body {
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 160ms;
+}
+
+svg {
+  flex-shrink: 0;
+}
+
+.dashboard-readable :where(p, span, a, button, input, select, textarea, td, th, label) {
+  font-size: max(15px, 1em);
+}
+
+.dashboard-readable svg {
+  min-width: 18px;
+  min-height: 18px;
+}
+
+main label,
+form label {
+  line-height: 1.35;
+}
+
+main input,
+main select,
+main textarea {
+  line-height: 1.5;
+}

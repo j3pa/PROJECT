@@ -74,7 +74,7 @@ export async function GET() {
           id SERIAL PRIMARY KEY,
           username VARCHAR(255) NOT NULL UNIQUE,
           email VARCHAR(255) NOT NULL UNIQUE,
-          password VARCHAR(255) NOT NULL,
+          password_hash VARCHAR(255) NOT NULL,
           role VARCHAR(255) NOT NULL DEFAULT 'Operator',
           status_sesi VARCHAR(255) NOT NULL DEFAULT 'Nonaktif',
           last_login TIMESTAMP,
@@ -215,7 +215,7 @@ export async function GET() {
         INSERT INTO users (
           username,
           email,
-          password,
+          password_hash,
           role,
           status_sesi,
           last_login

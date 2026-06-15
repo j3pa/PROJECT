@@ -116,7 +116,7 @@ export default function ManifestCreateForm({ kendaraanList, tanggalHariIni }: Ma
     if (!message) return null;
 
     return (
-      <p id={`${fieldName}-error`} className="text-red-600 italic text-sm mt-1">
+      <p id={`${fieldName}-error`} className="order-3 text-red-600 italic text-sm">
         {message}
       </p>
     );

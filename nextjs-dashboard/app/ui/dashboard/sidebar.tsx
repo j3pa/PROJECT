@@ -9,7 +9,7 @@ const navOperasional = [
     href: '/dashboard',
     label: 'Dashboard',
     icon: (
-      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-5 h-5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <rect x="1" y="1" width="6" height="6" rx="1"/>
         <rect x="9" y="1" width="6" height="6" rx="1"/>
         <rect x="1" y="9" width="6" height="6" rx="1"/>
@@ -21,7 +21,7 @@ const navOperasional = [
     href: '/dashboard/tracking',
     label: 'Tracking AWB',
     icon: (
-      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-5 h-5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="8" cy="8" r="6"/>
         <circle cx="8" cy="8" r="2"/>
       </svg>
@@ -31,7 +31,7 @@ const navOperasional = [
     href: '/dashboard/manifest',
     label: 'Manifest Kargo',
     icon: (
-      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-5 h-5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <rect x="2" y="1" width="12" height="14" rx="1"/>
         <line x1="5" y1="5" x2="11" y2="5"/>
         <line x1="5" y1="8" x2="11" y2="8"/>
@@ -43,7 +43,7 @@ const navOperasional = [
     href: '/dashboard/kendaraan',
     label: 'Data Kendaraan',
     icon: (
-      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-5 h-5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <rect x="1.5" y="5" width="13" height="6" rx="1.5"/>
         <circle cx="4.5" cy="11.5" r="1"/>
         <circle cx="11.5" cy="11.5" r="1"/>
@@ -55,7 +55,7 @@ const navOperasional = [
     href: '/dashboard/penerbangan',
     label: 'Status Penerbangan',
     icon: (
-      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-5 h-5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M1 10l2-2 3 1 4-5 2-1v2l-4 5 1 3-2 1-1-2-2 1-1-1z"/>
       </svg>
     ),
@@ -67,7 +67,7 @@ const navSistem = [
     href: '/dashboard/logs',
     label: 'Tracking Log',
     icon: (
-      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-5 h-5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="8" cy="8" r="6"/>
         <polyline points="8,4 8,8 11,10"/>
       </svg>
@@ -75,9 +75,9 @@ const navSistem = [
   },
   {
     href: '/dashboard/pengguna',
-    label: 'Pengguna',
+    label: 'Profil',
     icon: (
-      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className="w-5 h-5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="8" cy="6" r="3"/>
         <path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
       </svg>
@@ -104,31 +104,31 @@ export default function Sidebar() {
   return (
     <aside
       className={`
-        flex flex-col h-screen bg-[#0d1a4a] text-white transition-all duration-250 flex-shrink-0
-        ${collapsed ? 'w-[60px]' : 'w-[200px]'}
+        flex flex-col h-screen bg-gradient-to-b from-[#061b4d] via-[#071b47] to-[#05143a] text-white transition-all duration-250 flex-shrink-0 shadow-2xl
+        ${collapsed ? 'w-[78px]' : 'w-[270px]'}
       `}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-4 border-b border-white/10">
-        <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-          <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="orange">
+      <div className="flex items-center gap-4 px-5 py-7 border-b border-white/10">
+        <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-950/40">
+          <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="orange">
             <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
           </svg>
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <div className="text-sm font-bold text-white leading-tight">Ekspedisi Petir</div>
-            <div className="text-[10px] text-blue-300">Cargo Udara</div>
+            <div className="text-[20px] font-bold text-white leading-tight">Ekspedisi Petir</div>
+            <div className="text-[15px] text-blue-200/80">Cargo Udara</div>
           </div>
         )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-3 overflow-y-auto">
+      <nav className="flex-1 overflow-y-auto px-3 py-5">
         {/* Operasional */}
         {!collapsed && (
-          <div className="px-4 pt-2 pb-1 text-[10px] font-bold text-blue-300 uppercase tracking-widest">
-            Operasional
+          <div className="px-2 pb-3 text-[13px] font-bold text-cyan-400 uppercase tracking-wide">
+            OPERASIONAL
           </div>
         )}
         {navOperasional.map(item => {
@@ -138,11 +138,11 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={`
-                flex items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium
-                border-l-2 transition-all
+                mb-2 flex items-center gap-3.5 rounded-lg px-4 py-3.5 text-[16px] font-semibold
+                transition-all
                 ${active
-                  ? 'bg-blue-900/40 border-blue-400 text-white'
-                  : 'border-transparent text-blue-200/70 hover:bg-white/5 hover:text-white'}
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30'
+                  : 'text-blue-100/65 hover:bg-white/[0.07] hover:text-white'}
               `}
             >
               <span className="flex-shrink-0">{item.icon}</span>
@@ -153,8 +153,8 @@ export default function Sidebar() {
 
         {/* Sistem */}
         {!collapsed && (
-          <div className="px-4 pt-4 pb-1 text-[10px] font-bold text-blue-300 uppercase tracking-widest">
-            Sistem
+          <div className="px-2 pb-3 pt-6 text-[13px] font-bold text-cyan-400 uppercase tracking-wide">
+            SISTEM
           </div>
         )}
         {navSistem.map(item => {
@@ -164,11 +164,11 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={`
-                flex items-center gap-2.5 px-4 py-2.5 text-[12.5px] font-medium
-                border-l-2 transition-all
+                mb-2 flex items-center gap-3.5 rounded-lg px-4 py-3.5 text-[16px] font-semibold
+                transition-all
                 ${active
-                  ? 'bg-blue-900/40 border-blue-400 text-white'
-                  : 'border-transparent text-blue-200/70 hover:bg-white/5 hover:text-white'}
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30'
+                  : 'text-blue-100/65 hover:bg-white/[0.07] hover:text-white'}
               `}
             >
               <span className="flex-shrink-0">{item.icon}</span>
@@ -179,12 +179,12 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout */}
-      <div className="border-t border-white/10">
+      <div className="border-t border-white/10 px-3 py-3">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2.5 px-4 py-3 w-full text-[12.5px] font-medium text-red-400 hover:bg-white/5 transition"
+          className="flex items-center gap-3.5 rounded-lg px-4 py-3.5 w-full text-[16px] font-semibold text-red-400 hover:bg-white/5 transition"
         >
-          <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M6 14H3a1 1 0 01-1-1V3a1 1 0 011-1h3M11 11l3-3-3-3M14 8H6"/>
           </svg>
           {!collapsed && <span>Keluar</span>}
@@ -193,10 +193,10 @@ export default function Sidebar() {
         {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed(c => !c)}
-          className="flex items-center gap-2.5 px-4 py-3 w-full text-[11px] text-blue-300/60 hover:text-blue-200 hover:bg-white/5 transition border-t border-white/10"
+          className="mt-3 flex items-center gap-3.5 rounded-lg px-4 py-3.5 w-full text-[16px] text-blue-100/65 hover:text-blue-100 hover:bg-white/5 transition border-t border-white/10"
         >
           <svg
-            className={`w-4 h-4 flex-shrink-0 transition-transform ${collapsed ? 'rotate-180' : ''}`}
+            className={`w-5 h-5 flex-shrink-0 transition-transform ${collapsed ? 'rotate-180' : ''}`}
             viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"
           >
             <polyline points="10,4 6,8 10,12"/>

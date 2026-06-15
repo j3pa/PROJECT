@@ -16,14 +16,13 @@ export async function POST(request: Request) {
       );
     }
 
-    if (newPassword.length < 4) {
+    if (newPassword.length < 6) {
       return Response.json(
-        { error: 'Password baru minimal 4 karakter.' },
+        { error: 'Password baru minimal 6 karakter.' },
         { status: 400 },
       );
     }
 
-    // Cari user hanya berdasarkan username (tanpa email)
     const users = await sql`
       SELECT id, username
       FROM users
@@ -34,15 +33,13 @@ export async function POST(request: Request) {
     const user = users[0];
     if (!user) {
       return Response.json(
-        { error: 'Username tidak ditemukan.' },
+        { error: 'Username tidak terdaftar dalam sistem.' },
         { status: 404 },
       );
     }
 
-    // Hash password baru
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password_hash
     await sql`
       UPDATE users
       SET password_hash = ${hashedPassword}, updated_at = NOW()
@@ -51,12 +48,12 @@ export async function POST(request: Request) {
 
     return Response.json({
       success: true,
-      message: 'Password berhasil direset. Silakan login dengan password baru.',
+      message: 'Password berhasil diubah. Silakan kembali ke login.',
     });
   } catch (error) {
     console.error('Forgot Password Error:', error);
     return Response.json(
-      { error: 'Gagal memproses reset password. Coba lagi nanti.' },
+      { error: 'Gagal memproses permintaan reset password. Coba lagi nanti.' },
       { status: 500 },
     );
   }

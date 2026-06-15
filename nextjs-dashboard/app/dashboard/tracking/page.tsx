@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Topbar from '@/app/ui/dashboard/topbar'
 import { getTrackingData } from '@/app/lib/actions' // Impor fungsi server action database
 
@@ -171,6 +172,7 @@ function ModalOperator({
 }
 
 export default function TrackingPage() {
+  const router = useRouter()
   const [input, setInput] = useState('')
   const [searchedAwb, setSearchedAwb] = useState('')
   const [result, setResult] = useState<TrackingData | null | 'not-found'>(null)
@@ -179,7 +181,10 @@ export default function TrackingPage() {
 
   async function handleTrack(targetKey?: string) {
     const key = (targetKey || input).trim()
-    if (!key) return
+    if (!key) {
+      router.push('/dashboard/tracking/error')
+      return
+    }
     
     setLoading(true)
     setSearchedAwb(key)
@@ -188,10 +193,10 @@ export default function TrackingPage() {
       if (data) {
         setResult(data as TrackingData)
       } else {
-        setResult('not-found')
+        router.push(`/dashboard/tracking/error?query=${encodeURIComponent(key)}`)
       }
     } catch (err) {
-      setResult('not-found')
+      router.push(`/dashboard/tracking/error?query=${encodeURIComponent(key)}`)
     } finally {
       setLoading(false)
     }

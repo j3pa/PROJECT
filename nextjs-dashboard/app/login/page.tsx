@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -137,15 +138,15 @@ export default function LoginPage() {
         <button
           onClick={doLogin}
           disabled={loading}
-          className="bg-[#fdc00b] px-8 py-2 rounded-[10px] font-semibold mt-6 mb-2 text-black disabled:opacity-60"
+          className="bg-[#fdc00b] px-8 py-2 rounded-[10px] font-semibold mt-6 text-black disabled:opacity-60"
         >
           {loading ? "MEMPROSES..." : "LOG IN"}
         </button>
 
         {/* FORGOT */}
-        <p className="text-sm text-gray-600 mb-6">
-          Forgot password?
-        </p>
+        <Link href="/reset-password" className="mt-3 mb-6 block text-sm font-semibold text-blue-700 hover:text-blue-900">
+          Lupa Password?
+        </Link>
 
         {/* LOGO BAWAH */}
         <div className="flex justify-center mt-2">

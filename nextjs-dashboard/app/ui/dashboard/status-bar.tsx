@@ -1,13 +1,29 @@
+"use client";
+
+import { useSystemTime } from '@/app/ui/dashboard/use-system-time';
+
 export default function StatusBar() {
+  const now = useSystemTime();
+
   return (
-    <div className="h-[36px] bg-white border-t border-gray-200 flex items-center justify-between px-6 flex-shrink-0 text-[11px]">
-      <div className="flex items-center gap-1.5 text-gray-500">
-        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-        <span>Data diperbarui secara real-time</span>
-        <span className="mx-2 text-gray-300">|</span>
-        <span>Gudang Bandara Sudirman</span>
+    <div className="h-[46px] flex-shrink-0 border-t border-gray-200 bg-white px-7 text-[15px] text-gray-500">
+      <div className="flex h-full items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="h-3 w-3 flex-shrink-0 rounded-full bg-green-500" />
+          <span className="truncate">Data diperbarui secara real-time</span>
+          <span className="hidden text-gray-300 sm:inline">|</span>
+          <span className="hidden truncate sm:inline">Gudang Bandara Sudirman</span>
+        </div>
+
+        <div className="hidden items-center gap-2.5 text-right md:flex">
+          <span>Sinkron terakhir</span>
+          <span className="font-mono text-gray-700">
+            {now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </span>
+          <span className="text-gray-300">|</span>
+          <span>Ekspedisi Petir V1</span>
+        </div>
       </div>
-      <span className="text-gray-400">Ekspedisi Petir V1 &nbsp;|&nbsp; Sistem Cargo Udara</span>
     </div>
-  )
+  );
 }
