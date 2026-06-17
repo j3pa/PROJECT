@@ -9,6 +9,7 @@ export interface SessionPayload {
   username: string;
   role: string;
   expiresAt: string;
+  loginAt?: string;
 }
 
 export function createSessionValue(payload: SessionPayload) {

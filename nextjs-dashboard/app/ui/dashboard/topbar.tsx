@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSystemTime } from '@/app/ui/dashboard/use-system-time'
+import { formatWibClock } from '@/app/lib/time'
 
 interface TopbarProps {
   title: string
@@ -71,18 +72,18 @@ export default function Topbar({ title }: TopbarProps) {
       <span className="text-[20px] font-semibold text-[#0d1a4a]">{title}</span>
 
       <div className="flex items-center gap-4">
-        {/* Online badge */}
+
         <span className="flex items-center gap-2 bg-green-100 text-green-700 text-[14px] font-semibold px-4 py-1.5 rounded-full">
           <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
           Sistem Online
         </span>
 
-        {/* Clock */}
+
         <span className="text-[16px] text-gray-500 font-mono min-w-[92px] text-right">
-          {now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          {formatWibClock(now)}
         </span>
 
-        {/* Account menu */}
+
         <div ref={dropdownRef} className="relative">
           <button
             type="button"

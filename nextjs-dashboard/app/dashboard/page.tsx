@@ -4,12 +4,11 @@ import Topbar from '@/app/ui/dashboard/topbar';
 import StatCard from '@/app/ui/dashboard/stat-card';
 import CargoTable from '@/app/ui/dashboard/cargo-table';
 import MonthlyBookingChart from '@/app/ui/dashboard/monthly-booking-chart';
+import { INDONESIA_TIME_ZONE } from '@/app/lib/time';
 
 export const metadata = {
   title: 'Dashboard Operator',
 };
-
-// Inisialisasi koneksi database Neon
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 export const dynamic = 'force-dynamic';
@@ -100,8 +99,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       (!dateFilter || dateValue === dateFilter)
     );
   });
-
-  // Hitung statistik secara dinamis dari data transaksi yang sedang difilter
   const totalKargo = filteredTransactions.length;
   const totalSelesai = filteredTransactions.filter(
     (t) =>
@@ -118,6 +115,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       t.status === 'Loaded',
   ).length;
   const tanggalHariIni = new Intl.DateTimeFormat('id-ID', {
+    timeZone: INDONESIA_TIME_ZONE,
     weekday: 'long',
     day: '2-digit',
     month: 'long',

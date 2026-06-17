@@ -1,7 +1,8 @@
 import postgres from 'postgres';
 import Topbar from '@/app/ui/dashboard/topbar';
 import { getServerSession } from '@/app/lib/auth';
-import LoginDuration from '@/app/ui/dashboard/login-duration';
+import ProfileTimeCards, { ProfileLoginDurationCard } from '@/app/ui/dashboard/profile-time-cards';
+import { toSafeIsoString } from '@/app/lib/time';
 
 export const metadata = {
   title: 'Profil',
@@ -11,33 +12,17 @@ export const dynamic = 'force-dynamic';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
-function formatLoginDate(dateValue?: string | Date | null) {
-  const safeDate = dateValue ? new Date(dateValue) : new Date();
-  return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(safeDate);
-}
-
-function toIsoString(dateValue?: string | Date | null) {
-  if (!dateValue) return new Date().toISOString();
-  const date = new Date(dateValue);
-  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
-}
-
 export default async function PenggunaPage() {
   const session = await getServerSession();
+  let timeWarning = '';
 
   let userProfile = {
     username: session?.username || 'Andika',
     email: 'andika123@gmail.com',
     role: session?.role || 'Supervisor',
     status_sesi: 'Aktif',
-    last_login: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_login: session?.loginAt || null,
+    updated_at: null as string | null,
   };
 
   if (session?.userId) {
@@ -55,13 +40,18 @@ export default async function PenggunaPage() {
           email: userRows[0].email || userProfile.email,
           role: userRows[0].role || userProfile.role,
           status_sesi: userRows[0].status_sesi || userProfile.status_sesi,
-          last_login: toIsoString(userRows[0].last_login || userProfile.last_login),
-          updated_at: toIsoString(userRows[0].updated_at || userProfile.updated_at),
+          last_login: toSafeIsoString(userRows[0].last_login) || userProfile.last_login,
+          updated_at: toSafeIsoString(userRows[0].updated_at),
         };
+      } else {
+        timeWarning = 'Data akun pengguna tidak ditemukan di database.';
       }
     } catch (error) {
       console.error('Gagal memuat profil pengguna:', error);
+      timeWarning = 'Data waktu akun belum bisa dimuat dari database.';
     }
+  } else {
+    timeWarning = 'Sesi pengguna belum tersedia. Silakan login ulang jika waktu akun tidak tampil.';
   }
 
   const initials = String(userProfile.username || 'A').slice(0, 1).toUpperCase();
@@ -91,11 +81,12 @@ export default async function PenggunaPage() {
               </span>
             </div>
 
-            <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4">
-              <p className="text-sm font-bold text-blue-900">Durasi Login</p>
-              <p className="mt-2 text-sm leading-6 text-blue-800">
-                Aktif selama <LoginDuration since={userProfile.last_login} /> sejak login terakhir.
-              </p>
+            <div className="mt-6">
+              <ProfileLoginDurationCard
+                initialLastLogin={userProfile.last_login}
+                initialUpdatedAt={userProfile.updated_at}
+                initialWarning={timeWarning}
+              />
             </div>
           </div>
 
@@ -123,16 +114,11 @@ export default async function PenggunaPage() {
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <p className="text-sm font-semibold text-gray-500">Login Terakhir</p>
-                <p className="mt-3 text-xl font-bold text-[#0d1a4a]">{formatLoginDate(userProfile.last_login)}</p>
-                <p className="mt-2 text-sm text-gray-500">Durasi diperbarui otomatis saat halaman aktif.</p>
-              </div>
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <p className="text-sm font-semibold text-gray-500">Update Data Akun</p>
-                <p className="mt-3 text-xl font-bold text-[#0d1a4a]">{formatLoginDate(userProfile.updated_at)}</p>
-                <p className="mt-2 text-sm text-gray-500">Sinkron otomatis mengikuti data terbaru sistem.</p>
-              </div>
+              <ProfileTimeCards
+                initialLastLogin={userProfile.last_login}
+                initialUpdatedAt={userProfile.updated_at}
+                initialWarning={timeWarning}
+              />
             </div>
           </div>
         </section>

@@ -1,4 +1,3 @@
-// lib/placeholder-data.ts
 
 export const bandara = [
   { id: 'B01', kode: 'CGK', nama: 'Soekarno-Hatta', kota: 'Jakarta' },
@@ -38,8 +37,6 @@ export const cargo = [
   { awb: 'AWB-009', customer_email: 'gina@gmail.com', tujuan_id: 'B01', berat: 7, status: 'Received' },
   { awb: 'AWB-010', customer_email: 'hendra@gmail.com', tujuan_id: 'B02', berat: 19, status: 'Loaded' },
 ];
-
-// Tabel Junction (Many-to-Many antara Penerbangan dan Cargo)
 export const manifest = [
   { awb: '001-2847391', pengirim: 'PT Solusi Maju',  tujuan: 'SUB', koli: 3, berat: '50 kg',   penerbangan: 'GA – 136',  status: 'Received',  waktuUpdate: '05.12' },
   { awb: '001-2847392', pengirim: 'PT Nusantara',    tujuan: 'DPS', koli: 1, berat: '7.5 kg',  penerbangan: 'IU – 602',  status: 'Sortation', waktuUpdate: '05.41' },
@@ -52,8 +49,6 @@ export const manifest = [
   { awb: '001-2847399', pengirim: 'UD Prima',        tujuan: 'TIM', koli: 2, berat: '27 kg',   penerbangan: 'ID – 820',  status: 'Received',  waktuUpdate: '07.18' },
   { awb: '001-2847400', pengirim: 'PT Sinar Jaya',   tujuan: 'BTH', koli: 3, berat: '41 kg',   penerbangan: 'SJ – 440',  status: 'Arrived',   waktuUpdate: '07.55' },
 ]
-
-// Tambahkan / Ganti bagian customers di app/lib/placeholder-data.ts
 export const customers = [
   { id: 'C01', name: 'Budi Santoso', email: 'budi@gmail.com', image_url: '/customers/budi.png' },
   { id: 'C02', name: 'Siti Aminah', email: 'siti@gmail.com', image_url: '/customers/siti.png' },
@@ -66,4 +61,3 @@ export const customers = [
   { id: 'C09', name: 'Gina Lestari', email: 'gina@gmail.com', image_url: '/customers/gina.png' },
   { id: 'C10', name: 'Hendra Kurniawan', email: 'hendra@gmail.com', image_url: '/customers/hendra.png' },
 ];
-// Pastikan array customers sudah Anda isi minimal 10 data yang email-nya cocok dengan data cargo di atas.

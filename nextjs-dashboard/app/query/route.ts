@@ -3,9 +3,8 @@ import postgres from 'postgres';
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 async function getCargoDataForUser(userEmail: string) {
-  // Query direvisi dengan WHERE clause untuk memfilter data berdasarkan 1 user saja
   const data = await sql`
-    SELECT 
+    SELECT
       cargo.awb,
       customers.name AS nama_customer,
       bandara.nama AS bandara_tujuan,
@@ -23,15 +22,11 @@ async function getCargoDataForUser(userEmail: string) {
 
 export async function GET() {
   try {
-    // Hardcode 1 email user dummy yang ada di database hasil seed (misal: Budi Santoso)
-    // Nanti pada tahap implementasi Auth, ini bisa diganti dengan email dari session user login
-    const currentUserEmail = 'budi.santoso@gmail.com'; 
+    const currentUserEmail = 'budi.santoso@gmail.com';
 
     const data = await getCargoDataForUser(currentUserEmail);
-    
-    // Format JSON agar langsung rapi (Pretty-print dari sisi kode)
     const prettyJson = JSON.stringify(data, null, 2);
-    
+
     return new Response(prettyJson, {
       headers: { 'Content-Type': 'application/json' },
     });

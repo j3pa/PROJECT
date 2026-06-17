@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import postgres from 'postgres';
 import Topbar from '@/app/ui/dashboard/topbar';
+import { formatWibDate } from '@/app/lib/time';
 
 export const metadata = {
   title: 'Detail Manifest',
@@ -12,15 +13,7 @@ const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 export const dynamic = 'force-dynamic';
 
 function formatTanggal(value: string | Date | null | undefined) {
-  if (!value) return '-';
-
-  return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
+  return formatWibDate(value, '-');
 }
 
 function formatRupiah(value: number | string | null | undefined) {

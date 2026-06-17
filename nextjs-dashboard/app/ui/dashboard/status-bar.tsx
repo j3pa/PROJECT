@@ -1,6 +1,7 @@
 "use client";
 
 import { useSystemTime } from '@/app/ui/dashboard/use-system-time';
+import { formatWibClock } from '@/app/lib/time';
 
 export default function StatusBar() {
   const now = useSystemTime();
@@ -18,7 +19,7 @@ export default function StatusBar() {
         <div className="hidden items-center gap-2.5 text-right md:flex">
           <span>Sinkron terakhir</span>
           <span className="font-mono text-gray-700">
-            {now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            {formatWibClock(now)}
           </span>
           <span className="text-gray-300">|</span>
           <span>Ekspedisi Petir V1</span>

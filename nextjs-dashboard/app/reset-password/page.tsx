@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function ResetPasswordPage() {
+  const router = useRouter();
   const [username, setUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -43,6 +45,9 @@ export default function ResetPasswordPage() {
       }
 
       setMessage(result.message || 'Password berhasil diubah.');
+      setTimeout(() => {
+        router.replace('/login');
+      }, 900);
     } catch (requestError) {
       setError('Gagal menghubungi server. Periksa koneksi dan coba lagi.');
     } finally {

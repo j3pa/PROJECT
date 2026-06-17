@@ -40,18 +40,21 @@ export async function POST(request: Request) {
       );
     }
 
-    await sql`
+    const loginRows = await sql`
       UPDATE users
-      SET status_sesi = 'Aktif', updated_at = NOW()
+      SET status_sesi = 'Aktif', last_login = NOW(), updated_at = NOW()
       WHERE id = ${user.id}
+      RETURNING last_login
     `;
 
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 8).toISOString();
+    const loginAt = new Date(loginRows[0]?.last_login || Date.now()).toISOString();
     const sessionValue = createSessionValue({
       userId: user.id,
       username: user.username,
       role: user.role,
       expiresAt,
+      loginAt,
     });
 
     return new Response(

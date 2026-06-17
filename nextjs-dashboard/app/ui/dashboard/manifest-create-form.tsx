@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { createTransaksi } from '@/app/lib/actions';
 
@@ -10,6 +10,7 @@ interface ManifestCreateFormProps {
 }
 
 export default function ManifestCreateForm({ kendaraanList, tanggalHariIni }: ManifestCreateFormProps) {
+  const [state, formAction, isPending] = useActionState(createTransaksi, { error: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -123,7 +124,7 @@ export default function ManifestCreateForm({ kendaraanList, tanggalHariIni }: Ma
   }
 
   return (
-    <form action={createTransaksi} onSubmit={handleSubmit} noValidate className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4">
+    <form action={formAction} onSubmit={handleSubmit} noValidate className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <label className="text-xs font-bold text-gray-400 uppercase">No AWB / Resi</label>
         <input
@@ -361,6 +362,12 @@ export default function ManifestCreateForm({ kendaraanList, tanggalHariIni }: Ma
         />
       </div>
 
+      {state.error ? (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm italic text-red-600">
+          {state.error}
+        </p>
+      ) : null}
+
       <div className="flex justify-end gap-2 mt-4 border-t pt-4">
         <Link
           href="/dashboard/manifest"
@@ -370,10 +377,10 @@ export default function ManifestCreateForm({ kendaraanList, tanggalHariIni }: Ma
         </Link>
         <button
           type="submit"
-          disabled={kendaraanList.length === 0}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold shadow-sm transition"
+          disabled={kendaraanList.length === 0 || isPending}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold shadow-sm transition disabled:opacity-60"
         >
-          SIMPAN DATA
+          {isPending ? 'MENYIMPAN...' : 'SIMPAN DATA'}
         </button>
       </div>
     </form>

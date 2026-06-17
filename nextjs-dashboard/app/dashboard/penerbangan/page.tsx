@@ -124,7 +124,7 @@ function StatusBadge({ status, delayMenit }: { status: Flight['status']; delayMe
 function FlightCard({ flight }: { flight: Flight }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5">
-      {/* Header */}
+
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-[15px] font-bold text-[#0d1a4a]">{flight.nomor}</p>
@@ -133,7 +133,7 @@ function FlightCard({ flight }: { flight: Flight }) {
         <StatusBadge status={flight.status} delayMenit={flight.delayMenit} />
       </div>
 
-      {/* Time row */}
+
       <div className="flex items-end justify-between mb-3">
         <div>
           <p className="text-[11px] text-gray-400 mb-1">{flight.labelKiri}</p>
@@ -153,7 +153,7 @@ function FlightCard({ flight }: { flight: Flight }) {
         </div>
       </div>
 
-      {/* Progress bar */}
+
       <div className="w-full h-1 bg-gray-100 rounded-full mb-3 overflow-hidden">
         <div
           className={`h-full rounded-full transition-all ${
@@ -164,7 +164,7 @@ function FlightCard({ flight }: { flight: Flight }) {
         />
       </div>
 
-      {/* Info footer */}
+
       <p className="text-[11.5px] text-gray-400">{flight.info}</p>
     </div>
   )
@@ -180,11 +180,11 @@ export default function PenerbanganPage() {
       <Topbar title="Status Penerbangan" />
 
       <div className="p-6">
-        {/* Page header */}
+
         <h1 className="text-[18px] font-bold text-[#0d1a4a] mb-1">Status Penerbangan</h1>
         <p className="text-[11px] text-gray-500 mb-5">Pembaruan real-time jadwal penerbangan kargo</p>
 
-        {/* Summary pills */}
+
         <div className="flex items-center gap-3 mb-5">
           <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-3 py-2">
             <span className="w-2 h-2 rounded-full bg-green-500" />
@@ -203,7 +203,7 @@ export default function PenerbanganPage() {
           </span>
         </div>
 
-        {/* Flight cards grid */}
+
         <div className="grid grid-cols-3 gap-4">
           {flights.map(f => (
             <FlightCard key={f.nomor} flight={f} />

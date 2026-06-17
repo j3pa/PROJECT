@@ -31,36 +31,36 @@ export default function AboutPage() {
   return (
     <main className="pt-32 pb-20 px-6 md:px-20 min-h-screen bg-[#0a2540] text-white">
       <div className="max-w-6xl mx-auto">
-        {/* Section: About Us */}
+
         <div className="grid md:grid-cols-2 gap-16 items-center mb-24">
           <div>
             <h2 className="text-4xl font-bold mb-6 tracking-tight">ABOUT US</h2>
             <p className="text-gray-300 leading-relaxed text-lg">
-              Ekspedisi Petir adalah perusahaan jasa pengiriman kargo udara yang 
-              beroperasi di mitra bandara di seluruh Indonesia. Kami mengutamakan 
+              Ekspedisi Petir adalah perusahaan jasa pengiriman kargo udara yang
+              beroperasi di mitra bandara di seluruh Indonesia. Kami mengutamakan
               kecepatan, keandalan, dan transparansi dalam proses pengiriman secara real-time.
             </p>
           </div>
           <div className="flex justify-center md:justify-end">
-            {/* Container Lingkaran */}
+
             <div className="w-72 h-72 bg-white rounded-full flex items-center justify-center overflow-hidden border-4 shadow-xl">
-                <img 
-                src="/logo.png" 
-                alt="Skybolt Logo" 
+                <img
+                src="/logo.png"
+                alt="Skybolt Logo"
                 className="w-full h-full object-cover"
                 />
                 </div>
             </div>
         </div>
 
-        {/* Section: Why Skybolt? */}
+
         <div>
           <h2 className="text-3xl font-bold mb-10 text-center md:text-left">WHY SKYBOLT?</h2>
-          
+
           <div className="grid sm:grid-cols-2 gap-6">
             {features.map((item, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="bg-white/10 p-6 rounded-2xl border border-white/5 hover:border-blue-500/50 transition-colors group"
               >
                 <div className="flex items-start space-x-4">

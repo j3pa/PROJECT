@@ -8,14 +8,11 @@ export const metadata = {
 };
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
-
-// Di Next.js terbaru, params bertipe Promise
 interface EditPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function EditManifestPage({ params }: EditPageProps) {
-  // 1. Wajib di-await terlebih dahulu sebelum mengambil properti id
   const resolvedParams = await params;
   const resiId = decodeURIComponent(resolvedParams.id);
   let transaction: any = null;
@@ -23,11 +20,8 @@ export default async function EditManifestPage({ params }: EditPageProps) {
   let databaseError = '';
 
   try {
-    // 2. Ambil data transaksi lama berdasarkan No Resi untuk ditampilkan kembali di form
     const transactionResult = await sql`SELECT * FROM transaksi WHERE resi = ${resiId}`;
     transaction = transactionResult[0];
-
-    // 3. Ambil seluruh daftar kendaraan dari database agar status aktif maupun data lama tetap bisa dipilih
     kendaraanList = await sql`
       SELECT *
       FROM kendaraan
@@ -69,14 +63,14 @@ export default async function EditManifestPage({ params }: EditPageProps) {
         <p className="text-xs text-gray-500 mb-6">Ubah kendaraan, status, dan tarif pengiriman tanpa mengubah data pengirim utama.</p>
 
         <form action={updateTransaksi.bind(null, resiId)} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4">
-          
-          {/* Field No Resi / AWB (Read-Only) */}
+
+
           <div className="flex flex-col gap-1">
             <label className="text-xs font-bold text-gray-400 uppercase">No AWB / Resi</label>
             <input type="text" value={transaction.resi} disabled className="border rounded-md p-2 bg-gray-100 font-mono text-gray-500 cursor-not-allowed text-sm" />
           </div>
 
-          {/* Manifes Pengirim & Penerima (Read-Only) */}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Nama Pengirim</label>
@@ -109,13 +103,13 @@ export default async function EditManifestPage({ params }: EditPageProps) {
             </div>
           </div>
 
-          {/* 1. SELEKSI PENGUBAHAN KENDARAAN */}
+
           <div className="flex flex-col gap-1">
             <label className="text-sm font-semibold text-gray-700">Pilih Kendaraan / Armada Baru</label>
-            <select 
-              name="kendaraan_id" 
-              defaultValue={transaction.kendaraan_id || ""} 
-              required 
+            <select
+              name="kendaraan_id"
+              defaultValue={transaction.kendaraan_id || ""}
+              required
               className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="" disabled>-- Pilih Armada Pengganti --</option>
@@ -127,13 +121,13 @@ export default async function EditManifestPage({ params }: EditPageProps) {
             </select>
           </div>
 
-          {/* 2. SELEKSI STATUS PENGIRIMAN */}
+
           <div className="flex flex-col gap-1">
             <label className="text-sm font-semibold text-gray-700">Status Pengiriman</label>
-            <select 
-              name="status_pengiriman" 
-              defaultValue={transaction.status_pengiriman} 
-              required 
+            <select
+              name="status_pengiriman"
+              defaultValue={transaction.status_pengiriman}
+              required
               className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="Pending">Pending</option>
@@ -144,20 +138,20 @@ export default async function EditManifestPage({ params }: EditPageProps) {
             </select>
           </div>
 
-          {/* 3. INPUT EDIT HARGA/TARIF */}
+
           <div className="flex flex-col gap-1">
             <label className="text-sm font-semibold text-gray-700">Tarif Pengiriman (Rp)</label>
-            <input 
-              name="tarif" 
-              type="number" 
-              defaultValue={transaction.tarif} 
+            <input
+              name="tarif"
+              type="number"
+              defaultValue={transaction.tarif}
               min="0"
-              required 
-              className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none" 
+              required
+              className="border rounded-md p-2 bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
 
-          {/* Tombol Aksi Kendali Form */}
+
           <div className="flex justify-end gap-2 mt-4 border-t pt-4">
             <Link href="/dashboard/manifest" className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100 text-xs font-semibold transition">
               BATAL

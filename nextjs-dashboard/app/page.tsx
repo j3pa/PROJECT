@@ -7,8 +7,8 @@ export const metadata = {
 export default function Home() {
   return (
     <main className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden text-white">
-      
-      {/* Background image + overlay */}
+
+
       <div className="absolute inset-0 -z-10">
         <img
           src="/background.jpeg"

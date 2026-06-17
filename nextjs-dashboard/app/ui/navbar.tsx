@@ -10,38 +10,38 @@ export default function Navbar() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="fixed top-0 w-full z-50 flex items-center justify-between px-10 py-5 bg-black/20 backdrop-blur-md">
-      <Link href="/">
+    <nav className="fixed top-0 z-50 flex h-20 w-full items-center justify-between bg-black/20 px-6 backdrop-blur-md md:px-10">
+      <Link href="/" className="flex h-10 items-center">
         <SkyboltLogo />
       </Link>
 
-      <div className="hidden md:flex space-x-8 font-medium">
+      <div className="hidden h-10 items-center gap-8 font-medium md:flex">
         <Link
           href="/"
-          className={isActive("/") ? "text-yellow-400" : "hover:text-blue-400"}
+          className={`flex h-10 items-center leading-none ${isActive("/") ? "text-yellow-400" : "hover:text-blue-400"}`}
         >
           HOME
         </Link>
 
         <Link
           href="/about"
-          className={isActive("/about") ? "text-yellow-400" : "hover:text-blue-400"}
+          className={`flex h-10 items-center leading-none ${isActive("/about") ? "text-yellow-400" : "hover:text-blue-400"}`}
         >
           ABOUT
         </Link>
 
         <Link
           href="/contact"
-          className={isActive("/contact") ? "text-yellow-400" : "hover:text-blue-400"}
+          className={`flex h-10 items-center leading-none ${isActive("/contact") ? "text-yellow-400" : "hover:text-blue-400"}`}
         >
           CONTACT
         </Link>
         <Link
           href="/login"
-          className="bg-blue-900 px-6 py-1 rounded-md border border-white/20 text-white"
+          className="flex h-10 items-center rounded-md border border-white/20 bg-blue-900 px-6 leading-none text-white"
         >
-  LOG IN
-</Link>
+          LOG IN
+        </Link>
       </div>
     </nav>
   );

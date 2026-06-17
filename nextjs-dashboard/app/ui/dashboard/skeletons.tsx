@@ -1,8 +1,6 @@
 
 const shimmer =
   'before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent';
-
-// --- SKELETON UTAMA DASHBOARD OPERATOR ---
 export function CardSkeleton() {
   return (
     <div className={`${shimmer} relative overflow-hidden rounded-xl bg-gray-100 p-6 shadow-sm min-h-[120px]`}>
@@ -26,8 +24,6 @@ export function DashboardSkeleton() {
     </div>
   );
 }
-
-// --- SKELETON UNTUK HALAMAN MANIFEST KARGO ---
 export function ManifestTableSkeleton() {
   return (
     <div className={`${shimmer} relative overflow-hidden space-y-6 p-6`}>
@@ -36,9 +32,9 @@ export function ManifestTableSkeleton() {
         <div className="h-10 w-28 bg-gray-200 rounded-lg" />
       </div>
       <div className="overflow-hidden rounded-xl bg-gray-100 p-4 min-h-[350px]">
-        {/* Simulasikan baris header tabel */}
+
         <div className="h-10 w-full bg-gray-200 rounded mb-4" />
-        {/* Simulasikan baris data data kosong */}
+
         <div className="space-y-3">
           <div className="h-8 w-full bg-gray-50 rounded" />
           <div className="h-8 w-full bg-gray-50 rounded" />
@@ -48,8 +44,6 @@ export function ManifestTableSkeleton() {
     </div>
   );
 }
-
-// --- SKELETON UNTUK HALAMAN TRACKING AWB ---
 export function TrackingSkeleton() {
   return (
     <div className="space-y-6 p-6 max-w-4xl mx-auto">
@@ -65,31 +59,27 @@ export function TrackingSkeleton() {
     </div>
   );
 }
-
-// Tambahkan ini di bagian paling bawah file app/ui/dashboard/skeletons.tsx
-
-// --- SKELETON UNTUK HALAMAN STATUS PENERBANGAN ---
 export function FlightTableSkeleton() {
   return (
     <div className={`${shimmer} relative overflow-hidden space-y-6 p-6`}>
-      {/* Title & Deskripsi */}
+
       <div className="space-y-2">
         <div className="h-8 w-56 bg-gray-200 rounded" />
         <div className="h-4 w-72 bg-gray-100 rounded" />
       </div>
 
-      {/* Grid Filter / Tab Kecil */}
+
       <div className="flex gap-2">
         <div className="h-8 w-24 bg-gray-200 rounded-full" />
         <div className="h-8 w-24 bg-gray-100 rounded-full" />
         <div className="h-8 w-24 bg-gray-100 rounded-full" />
       </div>
 
-      {/* Kerangka Tabel Penerbangan */}
+
       <div className="overflow-hidden rounded-xl bg-gray-50 p-4 min-h-[300px]">
-        {/* Kolom Header */}
+
         <div className="h-10 w-full bg-gray-200 rounded mb-4" />
-        {/* Baris Jadwal Penerbangan Kosong */}
+
         <div className="space-y-3">
           <div className="h-10 w-full bg-white rounded-lg shadow-sm border border-gray-100" />
           <div className="h-10 w-full bg-white rounded-lg shadow-sm border border-gray-100" />
@@ -100,8 +90,6 @@ export function FlightTableSkeleton() {
     </div>
   );
 }
-
-// --- SKELETON UNTUK HALAMAN TRACKING LOG ---
 export function LogTableSkeleton() {
   return (
     <div className={`${shimmer} relative overflow-hidden space-y-6 p-6`}>

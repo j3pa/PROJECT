@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Topbar from '@/app/ui/dashboard/topbar'
-import { getTrackingData } from '@/app/lib/actions' // Impor fungsi server action database
+import { getTrackingData } from '@/app/lib/actions'
 
 interface TrackingStep {
   label: string
@@ -60,7 +60,7 @@ function ModalOperator({
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-        {/* Header */}
+
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="text-[15px] font-bold text-[#0d1a4a]">Hubungi Operator</h2>
           <button
@@ -156,7 +156,7 @@ function ModalOperator({
               {error && <p className="text-[11.5px] text-red-500 mt-3">{error}</p>}
             </div>
 
-            {/* Footer */}
+
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
               <p className="text-[11px] text-gray-400">Pastikan pengisian form benar.</p>
               <div className="flex gap-2">
@@ -185,11 +185,11 @@ export default function TrackingPage() {
       router.push('/dashboard/tracking/error')
       return
     }
-    
+
     setLoading(true)
     setSearchedAwb(key)
     try {
-      const data = await getTrackingData(key) // Memanggil Server Action Neon
+      const data = await getTrackingData(key)
       if (data) {
         setResult(data as TrackingData)
       } else {
@@ -220,7 +220,7 @@ export default function TrackingPage() {
         <h1 className="text-[18px] font-bold text-[#0d1a4a] mb-1">Tracking Airway Bill</h1>
         <p className="text-[11px] text-gray-500 mb-5">Lacak status pengiriman kargo berdasarkan nomor AWB</p>
 
-        {/* Form input */}
+
         <div className="bg-white border border-gray-200 rounded-xl p-6 mb-5 w-full">
           <label className="block text-[12px] font-semibold text-gray-700 mb-2">Nomor Airway Bill (AWB)</label>
           <div className="flex gap-2 mb-3">
@@ -248,7 +248,7 @@ export default function TrackingPage() {
           )}
         </div>
 
-        {/* Jika belum melakukan pencarian */}
+
         {result === null && !loading && (
           <div className="bg-white border border-gray-200 rounded-xl p-16 flex flex-col items-center justify-center w-full">
             <p className="text-[16px] font-semibold text-gray-600 mb-1">Belum ada data tracking</p>
@@ -256,14 +256,14 @@ export default function TrackingPage() {
           </div>
         )}
 
-        {/* Loading Spinner */}
+
         {loading && (
           <div className="bg-white border border-gray-200 rounded-xl p-16 flex items-center justify-center text-gray-500 text-[13px] w-full">
             Sedang mencari data dari database Neon...
           </div>
         )}
 
-        {/* AWB ga ditemukan */}
+
         {result === 'not-found' && !loading && (
           <div className="bg-white border border-gray-200 rounded-xl min-h-[360px] px-6 py-14 flex flex-col items-center justify-center text-center w-full">
             <div className="w-11 h-11 rounded-full border border-red-100 bg-red-50 flex items-center justify-center mb-4">
@@ -291,7 +291,7 @@ export default function TrackingPage() {
           </div>
         )}
 
-        {/* Hasil tracking kargo real-time berhasil */}
+
         {result && result !== 'not-found' && !loading && (
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden w-full">
             <div className="bg-[#0d1a4a] px-6 py-4 flex items-start justify-between">

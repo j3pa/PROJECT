@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from 'react';
+import { INDONESIA_TIME_ZONE } from '@/app/lib/time';
 
 interface MonthlyBookingChartProps {
   transactions: any[];
@@ -48,6 +49,7 @@ function getDateKeyFromValue(value: string | Date | null | undefined) {
 
 function formatDayLabel(date: Date) {
   return new Intl.DateTimeFormat('id-ID', {
+    timeZone: INDONESIA_TIME_ZONE,
     day: '2-digit',
     month: 'short',
   }).format(date);
@@ -55,6 +57,7 @@ function formatDayLabel(date: Date) {
 
 function formatFullDate(date: Date) {
   return new Intl.DateTimeFormat('id-ID', {
+    timeZone: INDONESIA_TIME_ZONE,
     day: 'numeric',
     month: 'long',
     year: 'numeric',

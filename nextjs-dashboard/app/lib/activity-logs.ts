@@ -1,5 +1,6 @@
 
 import postgres from 'postgres';
+import { formatWibClock } from '@/app/lib/time';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -55,11 +56,7 @@ export async function fetchActivityLogs() {
 
     const logs: ActivityLogRow[] = trackingLogs.map((row) => {
       const occuredAt = new Date(row.occurred_at);
-      const waktu = occuredAt.toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
+      const waktu = formatWibClock(occuredAt);
 
       return {
         waktu,

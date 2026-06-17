@@ -9,6 +9,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -59,23 +60,23 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#052464]">
-      
-      {/* CARD */}
+
+
       <div className="relative bg-[#ffffff] w-[500px] rounded-[50px] border border-black p-10 text-center">
 
-        {/* POPUP BERHASIL LOGIN */}
+
         {success && (
           <div className="absolute inset-0 flex items-center justify-center z-10 backdrop-blur-sm bg-black/30 rounded-[25px]">
             <div className="bg-white border shadow-lg px-6 py-4 text-center rounded-md">
-              
-              {/* ICON */}
+
+
               <div className="flex justify-center mb-2">
                 <div className="w-8 h-8 rounded-full border-2 border-green-500 flex items-center justify-center text-green-500">
                   ✓
                 </div>
               </div>
 
-              {/* TEXT */}
+
               <p className="font-semibold text-gray-800">
                 Login berhasil!
               </p>
@@ -86,15 +87,15 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* LOGO ATAS */}
+
         <div className="flex justify-center mb-2">
           <Image src="/logo.png" alt="logo" width={120} height={120} />
         </div>
 
-        {/* TITLE */}
+
         <h1 className="text-xl font-bold text-blue-900 mb-6">LOGIN</h1>
 
-        {/* FORM */}
+
         <div className="text-left px-6">
           <label className="block text-sm font-semibold mb-1 text-black">
             Username
@@ -106,7 +107,7 @@ export default function LoginPage() {
             value={user}
             onChange={(e) => {
               setUser(e.target.value);
-              setError(""); 
+              setError("");
             }}
             onKeyDown={(e) => e.key === "Enter" && doLogin()}
           />
@@ -114,19 +115,39 @@ export default function LoginPage() {
           <label className="block text-sm font-semibold mb-1 text-black">
             Password
           </label>
-          <input
-            type="password"
-            placeholder="Masukkan password"
-            className="w-full border border-black px-3 py-2 bg-white text-black"
-            value={pass}
-            onChange={(e) => {
-              setPass(e.target.value);
-              setError("");
-            }}
-            onKeyDown={(e) => e.key === "Enter" && doLogin()}
-          />
+          <div className="relative mt-2">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Masukkan password"
+              className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 pr-12 text-sm text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              value={pass}
+              onChange={(e) => {
+                setPass(e.target.value);
+                setError("");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && doLogin()}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((current) => !current)}
+              className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+              aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+            >
+              {showPassword ? (
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 3l18 18" strokeLinecap="round" />
+                  <path d="M10.6 10.6A2 2 0 0 0 12 14a2 2 0 0 0 1.4-.6M9.9 5.2A10.8 10.8 0 0 1 12 5c5.5 0 9 5 9 7a8.2 8.2 0 0 1-2.3 3.5M6.1 6.8C4.1 8.2 3 10.5 3 12c0 2 3.5 7 9 7 1.7 0 3.2-.5 4.4-1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7Z" strokeLinejoin="round" />
+                  <circle cx="12" cy="12" r="2.5" />
+                </svg>
+              )}
+            </button>
+          </div>
 
-          {/* ERROR */}
+
           {error && (
             <p className="text-red-600 text-sm mt-2 italic">
               {error}
@@ -134,7 +155,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        {/* BUTTON */}
+
         <button
           onClick={doLogin}
           disabled={loading}
@@ -143,12 +164,12 @@ export default function LoginPage() {
           {loading ? "MEMPROSES..." : "LOG IN"}
         </button>
 
-        {/* FORGOT */}
+
         <Link href="/reset-password" className="mt-3 mb-6 block text-sm font-semibold text-blue-700 hover:text-blue-900">
           Lupa Password?
         </Link>
 
-        {/* LOGO BAWAH */}
+
         <div className="flex justify-center mt-2">
           <Image src="/logo.png" alt="logo" width={110} height={110} />
         </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useActionState, useState } from 'react';
 import Link from 'next/link';
+import type { ActionState } from '@/app/lib/actions';
 
 interface KendaraanValues {
   nama_kendaraan?: string;
@@ -12,7 +13,7 @@ interface KendaraanValues {
 }
 
 interface KendaraanFormProps {
-  action: (formData: FormData) => void | Promise<void>;
+  action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
   initialValues?: KendaraanValues;
   submitLabel: string;
 }
@@ -20,6 +21,7 @@ interface KendaraanFormProps {
 const statusOptions = ['Aktif', 'Tersedia', 'Maintenance', 'Tidak Tersedia'];
 
 export default function KendaraanForm({ action, initialValues = {}, submitLabel }: KendaraanFormProps) {
+  const [state, formAction, isPending] = useActionState(action, { error: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -119,7 +121,7 @@ export default function KendaraanForm({ action, initialValues = {}, submitLabel 
   }
 
   return (
-    <form action={action} onSubmit={handleSubmit} noValidate className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4">
+    <form action={formAction} onSubmit={handleSubmit} noValidate className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">
           <label className="text-sm font-semibold text-gray-700">Nama Kendaraan</label>
@@ -211,12 +213,18 @@ export default function KendaraanForm({ action, initialValues = {}, submitLabel 
         <ErrorText fieldName="status_kendaraan" />
       </div>
 
+      {state.error ? (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm italic text-red-600">
+          {state.error}
+        </p>
+      ) : null}
+
       <div className="flex justify-end gap-2 mt-4 border-t pt-4">
         <Link href="/dashboard/kendaraan" className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100 text-xs font-semibold transition">
           BATAL
         </Link>
-        <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold shadow-sm transition">
-          {submitLabel}
+        <button type="submit" disabled={isPending} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold shadow-sm transition disabled:opacity-60">
+          {isPending ? 'MENYIMPAN...' : submitLabel}
         </button>
       </div>
     </form>

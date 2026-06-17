@@ -4,7 +4,7 @@
 
 :root {
   --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 10, 37, 64; /* Navy Dark */
+  --background-start-rgb: 10, 37, 64;
   --background-end-rgb: 10, 37, 64;
 }
 
@@ -53,6 +53,7 @@ select,
 textarea {
   transition-property: color, background-color, border-color, box-shadow, transform, opacity;
   transition-duration: 160ms;
+  transition-timing-function: ease;
 }
 
 svg {
@@ -77,4 +78,71 @@ main input,
 main select,
 main textarea {
   line-height: 1.5;
+}
+
+.page-transition {
+  min-height: 100vh;
+  animation: page-enter 260ms ease both;
+}
+
+.reveal-ready {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 520ms ease,
+    transform 520ms ease,
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+a:hover,
+button:hover {
+  transform: translateY(-1px);
+}
+
+a:active,
+button:active {
+  transform: translateY(0);
+}
+
+main :where([class*='rounded'], [class*='shadow'], [class*='border']):hover {
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition,
+  .reveal-ready {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  a:hover,
+  button:hover,
+  a:active,
+  button:active {
+    transform: none;
+  }
 }

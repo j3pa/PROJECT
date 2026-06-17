@@ -1,6 +1,7 @@
 import './ui/global.css';
 import { Poppins } from "next/font/google";
 import ConditionalNavbar from '@/app/ui/conditional-navbar';
+import PageEffects from '@/app/ui/page-effects';
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -20,9 +21,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className={`${poppins.className} antialiased bg-[#0a2540] text-white`}>
         <ConditionalNavbar />
-        
-        {children}
+        <PageEffects>{children}</PageEffects>
       </body>
     </html>
   );
-} 
+}

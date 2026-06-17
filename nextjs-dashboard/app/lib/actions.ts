@@ -5,10 +5,15 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { getServerSession } from '@/app/lib/auth';
+import { INDONESIA_TIME_ZONE } from '@/app/lib/time';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 const statusOptions = ['Pending', 'Diproses', 'Dalam Pengiriman', 'Sampai Tujuan', 'Selesai'] as const;
 const jenisPengirimanOptions = ['Biasa', 'Cepat', 'Vvip'] as const;
+
+export type ActionState = {
+  error?: string;
+};
 
 const transaksiSchema = z.object({
   tanggal_kirim: z.string().min(1, 'Tanggal kirim wajib diisi.'),
@@ -94,12 +99,44 @@ async function generateKendaraanId() {
   return `K-${String(currentNumber + 1).padStart(3, '0')}`;
 }
 
-// FUNGSI UNTUK MELACAK NOMOR AWB DARI DATABASE REAL-TIME
+async function findDuplicateKendaraan(namaKendaraan: string, kodeKendaraan: string, currentId?: string) {
+  const rows = currentId
+    ? await sql`
+        SELECT nama_kendaraan, kode_kendaraan
+        FROM kendaraan
+        WHERE id <> ${currentId}
+          AND (
+            LOWER(TRIM(nama_kendaraan)) = LOWER(TRIM(${namaKendaraan}))
+            OR LOWER(TRIM(kode_kendaraan)) = LOWER(TRIM(${kodeKendaraan}))
+          )
+        LIMIT 1
+      `
+    : await sql`
+        SELECT nama_kendaraan, kode_kendaraan
+        FROM kendaraan
+        WHERE LOWER(TRIM(nama_kendaraan)) = LOWER(TRIM(${namaKendaraan}))
+          OR LOWER(TRIM(kode_kendaraan)) = LOWER(TRIM(${kodeKendaraan}))
+        LIMIT 1
+      `;
+
+  return rows[0];
+}
+
+async function findDuplicateTransaksi(jenisBarang: string, resi: string) {
+  const rows = await sql`
+    SELECT resi, jenis_barang
+    FROM transaksi
+    WHERE LOWER(TRIM(jenis_barang)) = LOWER(TRIM(${jenisBarang}))
+      OR resi = ${resi}
+    LIMIT 1
+  `;
+
+  return rows[0];
+}
 export async function getTrackingData(resi: string) {
   try {
-    // Cari data kargo utama dan padankan dengan kendaraan aktif yang membawanya
     const rows = await sql`
-      SELECT 
+      SELECT
         t.resi as awb,
         t.nama_pengirim as pengirim,
         t.nama_penerima as penerima,
@@ -116,19 +153,15 @@ export async function getTrackingData(resi: string) {
     if (rows.length === 0) return null;
 
     const cargo = rows[0];
-
-    // Generate riwayat step otomatis berdasarkan status dinamis database
     const stepLabels = ['Pending', 'Diproses', 'Dalam Pengiriman', 'Sampai Tujuan', 'Selesai'];
-    const currentStatus = cargo.status; // Mengambil data string status dari kolom database
+    const currentStatus = cargo.status;
     const statusIndex = stepLabels.indexOf(currentStatus);
-
-    // Pembuatan array checkpoint linimasa manifest kargo
     const steps = stepLabels.map((label, index) => {
       let time = '-';
       let desc = '';
 
       if (label === 'Pending') {
-        time = new Date(cargo.tanggal_kirim).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        time = new Date(cargo.tanggal_kirim).toLocaleDateString('id-ID', { timeZone: INDONESIA_TIME_ZONE, day: '2-digit', month: 'short', year: 'numeric' });
         desc = 'Barang diterima di gudang Bandara Sudirman';
       } else if (label === 'Diproses') {
         desc = 'Barang selesai melalui proses sortasi wilayah';
@@ -164,9 +197,7 @@ export async function getTrackingData(resi: string) {
     return null;
   }
 }
-// MEMBUAT TRANSAKSI BARU
-export async function createTransaksi(formData: FormData) {
-  // Generate otomatis Nomor AWB / Resi
+export async function createTransaksi(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const randomNum = Math.floor(1000 + Math.random() * 9000);
   const resi = `AWB-${dateStr}-${randomNum}`;
@@ -188,7 +219,7 @@ export async function createTransaksi(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(getValidationMessage(parsed.error));
+    return { error: getValidationMessage(parsed.error) };
   }
 
   const {
@@ -209,6 +240,12 @@ export async function createTransaksi(formData: FormData) {
   const operatorName = await getOperatorName();
 
   try {
+    const duplicateTransaksi = await findDuplicateTransaksi(jenis_barang, resi);
+
+    if (duplicateTransaksi) {
+      return { error: 'Data kargo dengan nama barang atau kode AWB yang sama sudah ada.' };
+    }
+
     await sql.begin(async (trx) => {
       await trx`
         INSERT INTO transaksi (
@@ -258,16 +295,12 @@ export async function createTransaksi(formData: FormData) {
     });
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Gagal menambah data transaksi kargo ke database Neon.');
+    return { error: 'Gagal menambah data transaksi kargo ke database Neon.' };
   }
-
-  // Bersihkan cache agar data baru langsung muncul di tabel dashboard operator
   revalidatePath('/dashboard');
   revalidatePath('/dashboard/manifest');
   revalidatePath('/dashboard/tracking');
   revalidatePath('/dashboard/logs');
-  
-  // Alihkan halaman kembali ke list manifest
   redirect('/dashboard/manifest');
 }
 
@@ -340,28 +373,23 @@ export async function deleteTransaction(resi: string) {
     const result = await sql`
       DELETE FROM transaksi WHERE resi = ${resi}
     `;
-    
-    console.log(`[DEBUG] Berhasil dihapus. Jumlah baris terpengaruh: ${result.count}`);
 
-    // Amankan pembaruan cache Next.js
+    console.log(`[DEBUG] Berhasil dihapus. Jumlah baris terpengaruh: ${result.count}`);
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/manifest');
     revalidatePath('/dashboard/tracking');
     revalidatePath('/dashboard/logs');
-    
+
     return { success: true };
   } catch (error: any) {
-    // MENAMPILKAN ERROR ASLI DI TERMINAL
     console.error('=== ERROR ASLI DARI DATABASE NEON ===');
     console.error(error);
     console.error('======================================');
-    
-    // MELEMPAR ERROR ASLI KE BROWSER AGAR TIDAK MUNCUL "Gagal menghapus data kargo" SAJA
     throw new Error(`Detail Error: ${error.message || error}`);
   }
 }
 
-export async function createKendaraan(formData: FormData) {
+export async function createKendaraan(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = kendaraanSchema.safeParse({
     nama_kendaraan: formData.get('nama_kendaraan'),
     jenis_kendaraan: formData.get('jenis_kendaraan'),
@@ -371,40 +399,51 @@ export async function createKendaraan(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(getValidationMessage(parsed.error));
+    return { error: getValidationMessage(parsed.error) };
   }
 
   const kendaraanId = await generateKendaraanId();
   const { nama_kendaraan, jenis_kendaraan, kode_kendaraan, kapasitas_muatan, status_kendaraan } = parsed.data;
 
-  await sql`
-    INSERT INTO kendaraan (
-      id,
-      nama_kendaraan,
-      jenis_kendaraan,
-      kode_kendaraan,
-      kapasitas_muatan,
-      status_kendaraan,
-      created_at,
-      updated_at
-    ) VALUES (
-      ${kendaraanId},
-      ${nama_kendaraan},
-      ${jenis_kendaraan},
-      ${kode_kendaraan},
-      ${kapasitas_muatan},
-      ${status_kendaraan},
-      NOW(),
-      NOW()
-    )
-  `;
+  try {
+    const duplicateKendaraan = await findDuplicateKendaraan(nama_kendaraan, kode_kendaraan);
+
+    if (duplicateKendaraan) {
+      return { error: 'Data kendaraan dengan nama atau kode yang sama sudah ada.' };
+    }
+
+    await sql`
+      INSERT INTO kendaraan (
+        id,
+        nama_kendaraan,
+        jenis_kendaraan,
+        kode_kendaraan,
+        kapasitas_muatan,
+        status_kendaraan,
+        created_at,
+        updated_at
+      ) VALUES (
+        ${kendaraanId},
+        ${nama_kendaraan},
+        ${jenis_kendaraan},
+        ${kode_kendaraan},
+        ${kapasitas_muatan},
+        ${status_kendaraan},
+        NOW(),
+        NOW()
+      )
+    `;
+  } catch (error) {
+    console.error('Create Kendaraan Error:', error);
+    return { error: 'Gagal menambah data kendaraan ke database.' };
+  }
 
   revalidatePath('/dashboard/kendaraan');
   revalidatePath('/dashboard/manifest/create');
   redirect('/dashboard/kendaraan');
 }
 
-export async function updateKendaraan(id: string, formData: FormData) {
+export async function updateKendaraan(id: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = kendaraanSchema.safeParse({
     nama_kendaraan: formData.get('nama_kendaraan'),
     jenis_kendaraan: formData.get('jenis_kendaraan'),
@@ -414,22 +453,33 @@ export async function updateKendaraan(id: string, formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(getValidationMessage(parsed.error));
+    return { error: getValidationMessage(parsed.error) };
   }
 
   const { nama_kendaraan, jenis_kendaraan, kode_kendaraan, kapasitas_muatan, status_kendaraan } = parsed.data;
 
-  await sql`
-    UPDATE kendaraan
-    SET
-      nama_kendaraan = ${nama_kendaraan},
-      jenis_kendaraan = ${jenis_kendaraan},
-      kode_kendaraan = ${kode_kendaraan},
-      kapasitas_muatan = ${kapasitas_muatan},
-      status_kendaraan = ${status_kendaraan},
-      updated_at = NOW()
-    WHERE id = ${id}
-  `;
+  try {
+    const duplicateKendaraan = await findDuplicateKendaraan(nama_kendaraan, kode_kendaraan, id);
+
+    if (duplicateKendaraan) {
+      return { error: 'Data kendaraan dengan nama atau kode yang sama sudah ada.' };
+    }
+
+    await sql`
+      UPDATE kendaraan
+      SET
+        nama_kendaraan = ${nama_kendaraan},
+        jenis_kendaraan = ${jenis_kendaraan},
+        kode_kendaraan = ${kode_kendaraan},
+        kapasitas_muatan = ${kapasitas_muatan},
+        status_kendaraan = ${status_kendaraan},
+        updated_at = NOW()
+      WHERE id = ${id}
+    `;
+  } catch (error) {
+    console.error('Update Kendaraan Error:', error);
+    return { error: 'Gagal memperbarui data kendaraan.' };
+  }
 
   revalidatePath('/dashboard/kendaraan');
   revalidatePath('/dashboard/manifest/create');

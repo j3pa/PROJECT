@@ -108,7 +108,7 @@ export default function Sidebar() {
         ${collapsed ? 'w-[78px]' : 'w-[270px]'}
       `}
     >
-      {/* Logo */}
+
       <div className="flex items-center gap-4 px-5 py-7 border-b border-white/10">
         <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-950/40">
           <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="orange">
@@ -123,9 +123,9 @@ export default function Sidebar() {
         )}
       </div>
 
-      {/* Nav */}
+
       <nav className="flex-1 overflow-y-auto px-3 py-5">
-        {/* Operasional */}
+
         {!collapsed && (
           <div className="px-2 pb-3 text-[13px] font-bold text-cyan-400 uppercase tracking-wide">
             OPERASIONAL
@@ -151,7 +151,7 @@ export default function Sidebar() {
           )
         })}
 
-        {/* Sistem */}
+
         {!collapsed && (
           <div className="px-2 pb-3 pt-6 text-[13px] font-bold text-cyan-400 uppercase tracking-wide">
             SISTEM
@@ -178,7 +178,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Logout */}
+
       <div className="border-t border-white/10 px-3 py-3">
         <button
           onClick={handleLogout}
@@ -190,7 +190,7 @@ export default function Sidebar() {
           {!collapsed && <span>Keluar</span>}
         </button>
 
-        {/* Collapse toggle */}
+
         <button
           onClick={() => setCollapsed(c => !c)}
           className="mt-3 flex items-center gap-3.5 rounded-lg px-4 py-3.5 w-full text-[16px] text-blue-100/65 hover:text-blue-100 hover:bg-white/5 transition border-t border-white/10"

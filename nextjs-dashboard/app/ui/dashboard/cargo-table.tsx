@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-// Import action deleteTransaction dari lib actions kamu
 import { deleteTransaction } from '@/app/lib/actions';
+import { formatWibClock } from '@/app/lib/time';
 
 interface CargoTableProps {
   transactions?: any[];
@@ -20,8 +20,6 @@ export default function CargoTable({ transactions = [], actionMode = 'manage' }:
   const totalPages = Math.ceil(transactions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = transactions.slice(startIndex, startIndex + itemsPerPage);
-
-  // Fungsi konfirmasi dan eksekusi delete data ke database Neon
   const handleDelete = async (resi: string) => {
     const confirmDelete = window.confirm(`Apakah Anda yakin ingin menghapus transaksi dengan No AWB: ${resi}?`);
     if (!confirmDelete) return;
@@ -38,15 +36,12 @@ export default function CargoTable({ transactions = [], actionMode = 'manage' }:
       setIsDeleting(null);
     }
   };
-
-  // Tema Badge Status sesuai visual asli
   const badgeStyle: Record<string, string> = {
     'Received': 'bg-blue-50 text-blue-600 border border-blue-100',
     'Sortation': 'bg-amber-50 text-amber-600 border border-amber-100',
     'Loaded': 'bg-gray-100 text-gray-700 border border-gray-200',
     'OnTime': 'bg-green-50 text-green-600 border border-green-100',
     'Departed': 'bg-purple-50 text-purple-600 border border-purple-100',
-    // Fallback status database alternatif
     'Pending': 'bg-gray-50 text-gray-500 border border-gray-200',
     'Diproses': 'bg-amber-50 text-amber-600 border border-amber-100',
     'Dalam Pengiriman': 'bg-blue-50 text-blue-600 border border-blue-100',
@@ -86,7 +81,7 @@ export default function CargoTable({ transactions = [], actionMode = 'manage' }:
               const pengirim = row.nama_pengirim || row.pengirim;
               const statusKargo = row.status_pengiriman || row.status;
               const tujuan = row.kota_tujuan || row.tujuan || 'SUB';
-              
+
               let berat = row.berat || row.berat_barang || '0 kg';
               if (typeof berat === 'number') berat = `${berat} kg`;
 
@@ -96,7 +91,7 @@ export default function CargoTable({ transactions = [], actionMode = 'manage' }:
 
               let waktu = row.waktuMasuk || '-';
               if (row.tanggal_kirim && !row.waktuMasuk) {
-                waktu = new Date(row.tanggal_kirim).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                waktu = formatWibClock(new Date(row.tanggal_kirim)).slice(0, 5);
               }
 
               return (
@@ -124,7 +119,7 @@ export default function CargoTable({ transactions = [], actionMode = 'manage' }:
                   <td className="px-7 py-5 text-gray-400 whitespace-nowrap font-mono text-[14px]">
                     {waktu}
                   </td>
-                  
+
                   <td className="px-7 py-5 whitespace-nowrap text-center">
                     {resiCode ? (
                       <div className="flex items-center justify-center gap-1.5">
@@ -174,12 +169,12 @@ export default function CargoTable({ transactions = [], actionMode = 'manage' }:
         </table>
       </div>
 
-      {/* Pagination Footer */}
+
       <div className="px-7 py-5 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between text-[14px]">
         <p className="text-gray-400 font-medium">
           Total <span className="text-blue-600 font-bold">{transactions.length}</span> kargo · <span className="text-green-600 font-bold">{totalSelesai}</span> selesai / sampai tujuan
         </p>
-        
+
         {totalPages > 1 && (
           <div className="flex items-center gap-1.5">
             <button
