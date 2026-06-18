@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { getServerSession } from '@/app/lib/auth';
 import { INDONESIA_TIME_ZONE } from '@/app/lib/time';
 
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require', prepare: false });
 const statusOptions = ['Pending', 'Diproses', 'Dalam Pengiriman', 'Sampai Tujuan', 'Selesai'] as const;
 const jenisPengirimanOptions = ['Biasa', 'Cepat', 'Vvip'] as const;
 

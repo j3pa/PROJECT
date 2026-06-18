@@ -2,7 +2,7 @@ import postgres from 'postgres';
 import Topbar from '@/app/ui/dashboard/topbar';
 import { getServerSession } from '@/app/lib/auth';
 import ProfileTimeCards, { ProfileLoginDurationCard } from '@/app/ui/dashboard/profile-time-cards';
-import { toSafeIsoString } from '@/app/lib/time';
+import ProfileActions from '@/app/ui/dashboard/profile-actions';
 
 export const metadata = {
   title: 'Profil',
@@ -14,21 +14,18 @@ const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 export default async function PenggunaPage() {
   const session = await getServerSession();
-  let timeWarning = '';
 
   let userProfile = {
     username: session?.username || 'Andika',
     email: 'andika123@gmail.com',
     role: session?.role || 'Supervisor',
     status_sesi: 'Aktif',
-    last_login: session?.loginAt || null,
-    updated_at: null as string | null,
   };
 
   if (session?.userId) {
     try {
       const userRows = await sql`
-        SELECT username, email, role, status_sesi, last_login, updated_at
+        SELECT username, email, role, status_sesi
         FROM users
         WHERE id = ${session.userId}
         LIMIT 1
@@ -40,18 +37,11 @@ export default async function PenggunaPage() {
           email: userRows[0].email || userProfile.email,
           role: userRows[0].role || userProfile.role,
           status_sesi: userRows[0].status_sesi || userProfile.status_sesi,
-          last_login: toSafeIsoString(userRows[0].last_login) || userProfile.last_login,
-          updated_at: toSafeIsoString(userRows[0].updated_at),
         };
-      } else {
-        timeWarning = 'Data akun pengguna tidak ditemukan di database.';
       }
     } catch (error) {
       console.error('Gagal memuat profil pengguna:', error);
-      timeWarning = 'Data waktu akun belum bisa dimuat dari database.';
     }
-  } else {
-    timeWarning = 'Sesi pengguna belum tersedia. Silakan login ulang jika waktu akun tidak tampil.';
   }
 
   const initials = String(userProfile.username || 'A').slice(0, 1).toUpperCase();
@@ -61,11 +51,14 @@ export default async function PenggunaPage() {
       <Topbar title="Profil" />
 
       <main className="min-h-[calc(100vh-86px)] bg-[#f7f9fc] p-5 text-black lg:p-8">
-        <div className="mb-7">
-          <h1 className="text-[30px] font-bold tracking-tight text-[#0d1a4a]">Profil Akun</h1>
-          <p className="mt-1 text-[14px] text-gray-500">
-            Informasi akun operator dan status sesi yang diperbarui secara real-time.
-          </p>
+        <div className="mb-7 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h1 className="text-[30px] font-bold tracking-tight text-[#0d1a4a]">Profil Akun</h1>
+            <p className="mt-1 text-[14px] text-gray-500">
+              Informasi akun operator dan identitas layanan SKYBOLT.
+            </p>
+          </div>
+          <ProfileActions />
         </div>
 
         <section className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
@@ -82,11 +75,7 @@ export default async function PenggunaPage() {
             </div>
 
             <div className="mt-6">
-              <ProfileLoginDurationCard
-                initialLastLogin={userProfile.last_login}
-                initialUpdatedAt={userProfile.updated_at}
-                initialWarning={timeWarning}
-              />
+              <ProfileLoginDurationCard />
             </div>
           </div>
 
@@ -114,11 +103,7 @@ export default async function PenggunaPage() {
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
-              <ProfileTimeCards
-                initialLastLogin={userProfile.last_login}
-                initialUpdatedAt={userProfile.updated_at}
-                initialWarning={timeWarning}
-              />
+              <ProfileTimeCards />
             </div>
           </div>
         </section>

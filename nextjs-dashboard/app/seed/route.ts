@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import postgres from 'postgres';
 
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require', prepare: false });
 
 export async function GET() {
   try {
@@ -9,7 +9,23 @@ export async function GET() {
       await trx`DROP TRIGGER IF EXISTS transaksi_to_shipments_sync ON transaksi`;
       await trx`DROP FUNCTION IF EXISTS sync_shipments_from_transaksi()`;
       await trx`DROP TABLE IF EXISTS tracking_logs CASCADE`;
-      await trx`DROP TABLE IF EXISTS shipments CASCADE`;
+      await trx`
+        DO $$
+        BEGIN
+          IF EXISTS (
+            SELECT 1 FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = 'shipments'
+          ) THEN
+            EXECUTE 'DROP TABLE shipments CASCADE';
+          ELSIF EXISTS (
+            SELECT 1 FROM information_schema.views
+            WHERE table_schema = 'public' AND table_name = 'shipments'
+          ) THEN
+            EXECUTE 'DROP VIEW shipments CASCADE';
+          END IF;
+        END;
+        $$;
+      `;
       await trx`DROP TABLE IF EXISTS transaksi CASCADE`;
       await trx`DROP TABLE IF EXISTS kendaraan CASCADE`;
       await trx`DROP TABLE IF EXISTS users CASCADE`;
@@ -171,6 +187,8 @@ export async function GET() {
         EXECUTE FUNCTION sync_shipments_from_transaksi()
       `;
 
+      await trx`ALTER TABLE transaksi DISABLE TRIGGER transaksi_to_shipments_sync`;
+
       await trx`
         INSERT INTO kendaraan (
           id,
@@ -239,6 +257,8 @@ export async function GET() {
           ('AWB-20260525-2002', 'Pending', 'Dalam Pengiriman', 'Budi', 'Barang event sudah masuk tahap pengiriman.', CURRENT_TIMESTAMP - INTERVAL '5 hours'),
           ('AWB-20260526-4562', 'Pending', 'Diproses', 'Andika', 'Manifest baru dibuat dan masuk proses sortir.', CURRENT_TIMESTAMP - INTERVAL '4 hours')
       `;
+
+      await trx`ALTER TABLE transaksi ENABLE TRIGGER transaksi_to_shipments_sync`;
     });
 
     return Response.json({

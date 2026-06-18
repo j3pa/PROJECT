@@ -9,7 +9,7 @@ import { INDONESIA_TIME_ZONE } from '@/app/lib/time';
 export const metadata = {
   title: 'Dashboard Operator',
 };
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require', prepare: false });
 
 export const dynamic = 'force-dynamic';
 
@@ -218,7 +218,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
       <MonthlyBookingChart transactions={filteredTransactions} />
 
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+          <div>
+            <h2 className="text-[14px] font-bold text-[#0d1a4a]">
+              Manifest Transaksi Aktif - SKYBOLT
+            </h2>
+            <p className="text-[11px] text-gray-400 mt-1">
+              Menampilkan data cargo sesuai filter dashboard
+            </p>
+          </div>
+        </div>
+
         <CargoTable transactions={filteredTransactions} actionMode="detail" />
       </div>
     </div>

@@ -1,109 +1,82 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import LoginDuration from '@/app/ui/dashboard/login-duration';
-import { formatWibDate, toSafeIsoString } from '@/app/lib/time';
-
 type ProfileTimeCardsProps = {
   initialLastLogin?: string | null;
   initialUpdatedAt?: string | null;
   initialWarning?: string;
 };
 
-function useProfileTimeData({
-  initialLastLogin,
-  initialUpdatedAt,
-  initialWarning = '',
-}: ProfileTimeCardsProps) {
-  const [lastLogin, setLastLogin] = useState(initialLastLogin || null);
-  const [updatedAt, setUpdatedAt] = useState(initialUpdatedAt || null);
-  const [warning, setWarning] = useState(initialWarning);
+const companyMotto = 'Penetrate the Sky, Accelerate Your Business';
 
-  useEffect(() => {
-    let mounted = true;
+const mottoCards = [
+  {
+    title: 'Sky Reach',
+    description: 'Operasi kargo udara yang siap membawa bisnis bergerak lebih jauh.',
+    accent: 'from-blue-600 to-cyan-500',
+    icon: (
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M2.5 16.5 21 3l-5.5 18-4-7-7-1.5Z" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="m11.5 14 4-4" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Bolt Speed',
+    description: 'Ritme kerja cepat dengan standar layanan yang tetap presisi.',
+    accent: 'from-amber-400 to-orange-500',
+    icon: (
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M13.2 2.5 4 13.2h6.4l-.9 8.3L20 9.4h-6.2l-.6-6.9Z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Cargo Lift',
+    description: 'Dukungan pengiriman modern untuk pertumbuhan yang lebih gesit.',
+    accent: 'from-indigo-600 to-blue-500',
+    icon: (
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5v-7Z" strokeLinejoin="round" />
+        <path d="m4.5 9 7.5 4.2L19.5 9M12 13.2V20" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+];
 
-    async function loadTimeData() {
-      try {
-        const response = await fetch('/api/auth/session', { cache: 'no-store' });
-
-        if (!response.ok) {
-          if (mounted) setWarning('Data waktu akun belum bisa dimuat dari sesi aktif.');
-          return;
-        }
-
-        const result = await response.json();
-
-        if (!mounted) return;
-
-        setLastLogin(toSafeIsoString(result.user?.lastLogin) || null);
-        setUpdatedAt(toSafeIsoString(result.user?.updatedAt) || null);
-        setWarning(result.user?.timeWarning || '');
-      } catch {
-        if (mounted) setWarning('Data waktu akun gagal disinkronkan. Sistem akan mencoba lagi otomatis.');
-      }
-    }
-
-    loadTimeData();
-    const intervalId = window.setInterval(loadTimeData, 60000);
-    window.addEventListener('focus', loadTimeData);
-
-    return () => {
-      mounted = false;
-      window.clearInterval(intervalId);
-      window.removeEventListener('focus', loadTimeData);
-    };
-  }, []);
-
-  return { lastLogin, updatedAt, warning };
-}
-
-export function ProfileLoginDurationCard(props: ProfileTimeCardsProps) {
-  const { lastLogin } = useProfileTimeData(props);
-
+function MottoCard({ card, compact = false }: { card: (typeof mottoCards)[number]; compact?: boolean }) {
   return (
-    <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-      <p className="text-sm font-bold text-blue-900">Durasi Login</p>
-      <p className="mt-2 text-sm leading-6 text-blue-800">
-        Aktif selama <LoginDuration since={lastLogin} /> sejak login terakhir.
-      </p>
-      {!lastLogin ? (
-        <p className="mt-2 text-xs font-medium text-amber-700">
-          Waktu login belum tersedia dari database.
-        </p>
-      ) : null}
+    <div
+      className={`relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm ${
+        compact ? 'p-5' : 'p-6'
+      }`}
+    >
+      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${card.accent}`} />
+      <div className="flex items-start gap-4">
+        <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${card.accent} text-white shadow-lg shadow-blue-100`}>
+          {card.icon}
+        </div>
+        <div>
+          <p className="text-sm font-bold uppercase tracking-wide text-blue-700">{card.title}</p>
+          <p className="mt-2 text-lg font-bold leading-snug text-[#0d1a4a]">{companyMotto}</p>
+          <p className="mt-2 text-sm leading-6 text-gray-500">{card.description}</p>
+        </div>
+      </div>
     </div>
   );
 }
 
+export function ProfileLoginDurationCard(props: ProfileTimeCardsProps) {
+  void props;
+  return <MottoCard card={mottoCards[0]} compact />;
+}
+
 export default function ProfileTimeCards(props: ProfileTimeCardsProps) {
-  const { lastLogin, updatedAt, warning } = useProfileTimeData(props);
-  const formattedLastLogin = useMemo(
-    () => formatWibDate(lastLogin, 'Login terakhir belum tercatat di database.'),
-    [lastLogin],
-  );
-  const formattedUpdatedAt = useMemo(
-    () => formatWibDate(updatedAt, 'Waktu update data akun belum tersedia.'),
-    [updatedAt],
-  );
+  void props;
 
   return (
     <>
-      {warning ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-700 md:col-span-2">
-          {warning}
-        </div>
-      ) : null}
-
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <p className="text-sm font-semibold text-gray-500">Login Terakhir</p>
-        <p className="mt-3 text-xl font-bold text-[#0d1a4a]">{formattedLastLogin}</p>
-        <p className="mt-2 text-sm text-gray-500">Mengikuti timestamp login terakhir dari database.</p>
-      </div>
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <p className="text-sm font-semibold text-gray-500">Update Data Akun</p>
-        <p className="mt-3 text-xl font-bold text-[#0d1a4a]">{formattedUpdatedAt}</p>
-        <p className="mt-2 text-sm text-gray-500">Mengikuti kolom updated_at akun dari database.</p>
-      </div>
+      <MottoCard card={mottoCards[1]} />
+      <MottoCard card={mottoCards[2]} />
     </>
   );
 }

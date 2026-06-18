@@ -7,7 +7,7 @@ export const metadata = {
   title: 'Edit Kendaraan',
 };
 
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require', prepare: false });
 
 export const dynamic = 'force-dynamic';
 

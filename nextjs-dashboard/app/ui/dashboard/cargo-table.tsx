@@ -4,11 +4,26 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { deleteTransaction } from '@/app/lib/actions';
-import { formatWibClock } from '@/app/lib/time';
+import { INDONESIA_TIME_ZONE, parseDateValue } from '@/app/lib/time';
 
 interface CargoTableProps {
   transactions?: any[];
   actionMode?: 'manage' | 'detail';
+}
+
+function formatUpdatedAt(value?: string | Date | null) {
+  const date = parseDateValue(value);
+  if (!date) return '-';
+
+  return new Intl.DateTimeFormat('id-ID', {
+    timeZone: INDONESIA_TIME_ZONE,
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date).replace(',', '');
 }
 
 export default function CargoTable({ transactions = [], actionMode = 'manage' }: CargoTableProps) {
@@ -88,11 +103,7 @@ export default function CargoTable({ transactions = [], actionMode = 'manage' }:
               const armada = row.nama_kendaraan && row.kode_kendaraan
                 ? `${row.kode_kendaraan}`
                 : row.penerbangan || '-';
-
-              let waktu = row.waktuMasuk || '-';
-              if (row.tanggal_kirim && !row.waktuMasuk) {
-                waktu = formatWibClock(new Date(row.tanggal_kirim)).slice(0, 5);
-              }
+              const waktuUpdate = formatUpdatedAt(row.updated_at || row.created_at);
 
               return (
                 <tr key={resiCode || i} className="hover:bg-blue-50/10 transition group">
@@ -116,8 +127,8 @@ export default function CargoTable({ transactions = [], actionMode = 'manage' }:
                       {statusKargo}
                     </span>
                   </td>
-                  <td className="px-7 py-5 text-gray-400 whitespace-nowrap font-mono text-[14px]">
-                    {waktu}
+                  <td className="px-7 py-5 text-gray-400 whitespace-nowrap text-[13px] font-semibold">
+                    {waktuUpdate}
                   </td>
 
                   <td className="px-7 py-5 whitespace-nowrap text-center">

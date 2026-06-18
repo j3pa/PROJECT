@@ -2,7 +2,7 @@ import { getServerSession } from '@/app/lib/auth';
 import postgres from 'postgres';
 import { toSafeIsoString } from '@/app/lib/time';
 
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require', prepare: false });
 
 export async function GET() {
   const session = await getServerSession();

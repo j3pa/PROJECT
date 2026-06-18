@@ -2,7 +2,7 @@
 import postgres from 'postgres';
 import { formatWibClock } from '@/app/lib/time';
 
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require', prepare: false });
 
 export interface ActivityLogRow {
   waktu: string;

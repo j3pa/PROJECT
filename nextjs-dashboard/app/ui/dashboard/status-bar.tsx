@@ -1,11 +1,8 @@
 "use client";
 
-import { useSystemTime } from '@/app/ui/dashboard/use-system-time';
-import { formatWibClock } from '@/app/lib/time';
+import LiveClock from '@/app/ui/dashboard/live-clock';
 
 export default function StatusBar() {
-  const now = useSystemTime();
-
   return (
     <div className="h-[46px] flex-shrink-0 border-t border-gray-200 bg-white px-7 text-[15px] text-gray-500">
       <div className="flex h-full items-center justify-between gap-4">
@@ -17,10 +14,7 @@ export default function StatusBar() {
         </div>
 
         <div className="hidden items-center gap-2.5 text-right md:flex">
-          <span>Sinkron terakhir</span>
-          <span className="font-mono text-gray-700">
-            {formatWibClock(now)}
-          </span>
+          <LiveClock className="font-mono text-gray-700" />
           <span className="text-gray-300">|</span>
           <span>Ekspedisi Petir V1</span>
         </div>

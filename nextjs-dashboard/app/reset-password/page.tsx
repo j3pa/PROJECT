@@ -70,21 +70,21 @@ export default function ResetPasswordPage() {
 
           <div className="mt-8 space-y-5 text-left">
             <div>
-            <label htmlFor="reset-username" className="block text-sm font-semibold text-gray-800">
-              Username
-            </label>
-            <input
-              id="reset-username"
-              type="text"
-              value={username}
-              onChange={(event) => {
-                setUsername(event.target.value);
-                setError('');
-                setMessage('');
-              }}
-              placeholder="Masukkan username"
-              className="mt-2 h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
+              <label htmlFor="reset-username" className="block text-sm font-semibold text-gray-800">
+                Username
+              </label>
+              <input
+                id="reset-username"
+                type="text"
+                value={username}
+                onChange={(event) => {
+                  setUsername(event.target.value);
+                  setError('');
+                  setMessage('');
+                }}
+                placeholder="Masukkan username"
+                className="mt-2 h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-black outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
             </div>
 
             <div>
@@ -107,16 +107,16 @@ export default function ResetPasswordPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((current) => !current)}
-                  className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                  className="absolute right-3 top-[48%] flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 leading-none hover:bg-gray-100 hover:text-gray-700"
                   aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                 >
                   {showPassword ? (
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg className="block h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M3 3l18 18" strokeLinecap="round" />
                       <path d="M10.6 10.6A2 2 0 0 0 12 14a2 2 0 0 0 1.4-.6M9.9 5.2A10.8 10.8 0 0 1 12 5c5.5 0 9 5 9 7a8.2 8.2 0 0 1-2.3 3.5M6.1 6.8C4.1 8.2 3 10.5 3 12c0 2 3.5 7 9 7 1.7 0 3.2-.5 4.4-1.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : (
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg className="block h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7Z" strokeLinejoin="round" />
                       <circle cx="12" cy="12" r="2.5" />
                     </svg>

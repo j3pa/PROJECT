@@ -1,5 +1,5 @@
 import postgres from 'postgres';
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require', prepare: false });
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export async function fetchDashboardData() {
   try {

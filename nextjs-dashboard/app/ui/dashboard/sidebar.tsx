@@ -109,16 +109,16 @@ export default function Sidebar() {
       `}
     >
 
-      <div className="flex items-center gap-4 px-5 py-7 border-b border-white/10">
-        <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-950/40">
+      <div className={`flex items-center border-b border-white/10 py-7 ${collapsed ? 'justify-center px-3' : 'gap-4 px-5'}`}>
+        <div className={`${collapsed ? 'h-12 w-12' : 'h-14 w-14'} bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-950/40`}>
           <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="orange">
             <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
           </svg>
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <div className="text-[20px] font-bold text-white leading-tight">Ekspedisi Petir</div>
-            <div className="text-[15px] text-blue-200/80">Cargo Udara</div>
+            <div className="text-[20px] font-bold text-white leading-tight">SKYBOLT</div>
+            <div className="text-[15px] text-blue-200/80">Cargo Udara Modern</div>
           </div>
         )}
       </div>
@@ -138,8 +138,9 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={`
-                mb-2 flex items-center gap-3.5 rounded-lg px-4 py-3.5 text-[16px] font-semibold
+                mb-2 flex items-center rounded-lg py-3.5 text-[16px] font-semibold
                 transition-all
+                ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'}
                 ${active
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30'
                   : 'text-blue-100/65 hover:bg-white/[0.07] hover:text-white'}
@@ -164,8 +165,9 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={`
-                mb-2 flex items-center gap-3.5 rounded-lg px-4 py-3.5 text-[16px] font-semibold
+                mb-2 flex items-center rounded-lg py-3.5 text-[16px] font-semibold
                 transition-all
+                ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'}
                 ${active
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30'
                   : 'text-blue-100/65 hover:bg-white/[0.07] hover:text-white'}
@@ -182,7 +184,7 @@ export default function Sidebar() {
       <div className="border-t border-white/10 px-3 py-3">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3.5 rounded-lg px-4 py-3.5 w-full text-[16px] font-semibold text-red-400 hover:bg-white/5 transition"
+          className={`flex items-center rounded-lg py-3.5 w-full text-[16px] font-semibold text-red-400 hover:bg-white/5 transition ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'}`}
         >
           <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M6 14H3a1 1 0 01-1-1V3a1 1 0 011-1h3M11 11l3-3-3-3M14 8H6"/>
@@ -193,7 +195,8 @@ export default function Sidebar() {
 
         <button
           onClick={() => setCollapsed(c => !c)}
-          className="mt-3 flex items-center gap-3.5 rounded-lg px-4 py-3.5 w-full text-[16px] text-blue-100/65 hover:text-blue-100 hover:bg-white/5 transition border-t border-white/10"
+          className={`mt-3 flex items-center rounded-lg py-3.5 w-full text-[16px] text-blue-100/65 hover:text-blue-100 hover:bg-white/5 transition border-t border-white/10 ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'}`}
+          aria-label={collapsed ? 'Buka sidebar' : 'Ciutkan sidebar'}
         >
           <svg
             className={`w-5 h-5 flex-shrink-0 transition-transform ${collapsed ? 'rotate-180' : ''}`}

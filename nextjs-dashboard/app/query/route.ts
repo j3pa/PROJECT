@@ -1,6 +1,6 @@
 import postgres from 'postgres';
 
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require', prepare: false });
 
 async function getCargoDataForUser(userEmail: string) {
   const data = await sql`

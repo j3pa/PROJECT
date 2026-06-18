@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import postgres from 'postgres';
 import { createSessionValue, SESSION_COOKIE_NAME } from '@/app/lib/auth';
 
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require', prepare: false });
 
 export async function POST(request: Request) {
   try {

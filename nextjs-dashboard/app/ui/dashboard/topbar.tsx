@@ -3,15 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useSystemTime } from '@/app/ui/dashboard/use-system-time'
-import { formatWibClock } from '@/app/lib/time'
+import LiveClock from '@/app/ui/dashboard/live-clock'
 
 interface TopbarProps {
   title: string
 }
 
 export default function Topbar({ title }: TopbarProps) {
-  const now = useSystemTime()
   const [username, setUsername] = useState('Andika')
   const [role, setRole] = useState('Operator')
   const [open, setOpen] = useState(false)
@@ -79,9 +77,7 @@ export default function Topbar({ title }: TopbarProps) {
         </span>
 
 
-        <span className="text-[16px] text-gray-500 font-mono min-w-[92px] text-right">
-          {formatWibClock(now)}
-        </span>
+        <LiveClock className="text-[16px] text-gray-500 font-mono min-w-[92px] text-right" />
 
 
         <div ref={dropdownRef} className="relative">

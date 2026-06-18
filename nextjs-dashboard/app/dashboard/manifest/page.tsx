@@ -57,7 +57,7 @@ export default async function ManifestPage({ searchParams }: ManifestPageProps) 
           Data lengkap pengiriman – diperbarui otomatis dari database Neon
         </p>
 
-        <form action="/dashboard/manifest" className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
+        <form method="get" action="/dashboard/manifest" className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
           <input
             type="text"
             name="query"
